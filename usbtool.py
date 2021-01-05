@@ -19,6 +19,9 @@ FONDGRIS   = '\033[47m'
 NOIRSURGRIS= '\033[7;40;39m'
 BLUEONWHITE= '\033[7;44;39m'
 
+CIRCUP_COMMAND = ["circup"]
+CIRCUP_COMMAND = ["python3","../circup/circup.py"]
+
 # print the text from main
 def displayTheText(list,ports=[]):
 	outText = ""
@@ -125,8 +128,20 @@ def run_command_and_exit(deviceList,args):
 				subprocess.call(command)
 	# run tio after all that
 	if backup == None and not eject:
-		for device in selectedDevices:
-			connect_with_tio_and_exit(device['ports'][0],device['name'])
+		if args.circup:
+			for device in selectedDevices:
+				for volume in device['volumes']:
+					volume_src = volume['mount_point']
+					if os.path.exists(volume_src):
+						command = CIRCUP_COMMAND+["--path",volume_src]
+						command += re.split(" +",args.circup[0])
+						print(CYAN+BOLD+"- Running circup on",name,"-"*(56-len(device['name']))+ENDC)
+						print(BOLD+"> "+ENDC+" ".join(command))
+						subprocess.call(command)
+						break
+		else:
+			for device in selectedDevices:
+				connect_with_tio_and_exit(device['ports'][0],device['name'])
 	# nothing found, or nothing to do
 
 def main():
@@ -139,6 +154,7 @@ def main():
 	parser.add_argument('--wait','-w',help="Keep scanning until a device matches",action='store_true')
 	parser.add_argument('--eject','-e',help="Eject the disk volume(s) from the matching device",action='store_true')
 	parser.add_argument('--backup','-b',help="Backup copy of all Circuipython drives found into the given directory",default=None)
+	parser.add_argument('--circup','-c',help="Call circup on the selected board with the rest of the options",nargs=1)
 	args = parser.parse_args()
 	
 	wait = args.wait
