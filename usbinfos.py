@@ -91,19 +91,19 @@ if sys.platform == "darwin":
 				continue
 			# product id
 			try:
-				pid = int(dev['product_id'].split(" ")[0],16)
+				pid = int(dev['product_id'].strip().split(" ")[0],16)
 			except:
 				pid = 0
 			# serial number is not always present
 			if not 'serial_num' in dev:
 				dev['serial_num'] = ""
-			SN = dev['serial_num']
+			serial_num = dev['serial_num']
 			# try to guess the port using the Location ID or Serial Number
 			ttys = []
 			for x in range(len(remainingPorts)):
 				port = remainingPorts[x]
 				if port.vid == vid and port.pid == pid \
-					and port.serial_number == SN:
+					and port.serial_number == serial_num:
 					ttys.append(port.device)
 					remainingPorts[x] = None
 			remainingPorts = list(filter(lambda x:  x is not None, remainingPorts))
@@ -117,8 +117,10 @@ if sys.platform == "darwin":
 				continue
 			#
 			# manufacturer is kind of a mess sometimes
-			if not 'manufacturer' in dev:
-				dev['manufacturer'] = ""
+			if 'manufacturer' in dev:
+				manufacturer = dev['manufacturer']
+			else:
+				manufacturer = ""
 			# identify and add the micro:bit volumes
 			if dev['name'].find("micro:bit"):
 				if dev['serial_num'] in bitsList:
@@ -127,18 +129,32 @@ if sys.platform == "darwin":
 					}
 					dev['volumes'].append(bitvolume)
 			# list the volume(s) and the circtuipython run files
+			deviceVolumes = []
 			for volume in dev['volumes']:
 				if 'mount_point' in volume:
 					mount = volume['mount_point']
 					if mount != "":
-						volume['mains'] = []
+						mains = []
 						for mainFile in mainNames:
 							if os.path.exists(os.path.join(mount,mainFile)):
-								volume['mains'] += [mainFile]
+								mains += [mainFile]
+						deviceVolumes.append({
+							'mount_point': mount,
+							'mains': mains,
+						})
 			# add the device to the list
-			deviceList.append(dev)
+			curDevice = {}
+			curDevice['volumes'] = deviceVolumes
+			curDevice['product_id'] = pid
+			curDevice['vendor_id'] = vid
+			curDevice['serial_num'] = serial_num
+			curDevice['ports'] = ttys
+			curDevice['manufacturer'] = manufacturer
+			curDevice['name'] = dev['name']
+			deviceList.append(curDevice)
 		rp = [port.device for port in remainingPorts]
 		return (deviceList,rp)
+
 elif sys.platform == "linux":
 	import psutil
 	import pyudev
@@ -157,7 +173,7 @@ elif sys.platform == "linux":
 		devices = context.list_devices(subsystem='usb', DEVTYPE='usb_device')
 		for device in devices:
 			curDevice = {}
-			curDevice['volumes'] = []
+			deviceVolumes = []
 			name = device.get('ID_MODEL')
 			vid = int(device.get('ID_VENDOR_ID'),16)
 			SN = device.get('ID_SERIAL_SHORT','')
@@ -179,7 +195,7 @@ elif sys.platform == "linux":
 						for mainFile in mainNames:
 							if os.path.exists(os.path.join(volume,mainFile)):
 								mains.append(mainFile)
-						curDevice['volumes'].append({
+						deviceVolumes.append({
 							'mount_point': volume,
 							'mains': mains,
 						})
@@ -194,7 +210,8 @@ elif sys.platform == "linux":
 			#
 			if vid not in VIDS and len(ttys) == 0: continue
 			#
-			curDevice['devpath'] = devpath
+			#curDevice['devpath'] = devpath
+			curDevice['volumes'] = deviceVolumes
 			curDevice['name'] = name
 			curDevice['vendor_id'] = vid
 			curDevice['product_id'] = int(device.get('ID_MODEL_ID'),16)
@@ -208,6 +225,7 @@ else:
 	print("ERROR: platform not supported")
 
 if __name__ == "__main__":
+	import pprint
 	deviceList,remainingPorts = getDeviceList()
-	print(deviceList)
-	print(remainingPorts)
+	pprint.pprint(deviceList)
+	pprint.pprint(remainingPorts)
