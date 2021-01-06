@@ -3,7 +3,11 @@
 """
 Liste les appareils USB adafruit et trouve leur mountpoint et port série USB
 
-I found no way to use pure python (pyusb, pyserial, psutil, etc.) to link the drive and it's USB device, so instead we have to call a system specific command (system_profiler) as unsatisfying as it is.
+On MacOS I found no way to use pure python (pyusb, pyserial, psutil, etc.) to link the drive and it's USB device, so instead we have to call a system specific command (system_profiler) as unsatisfying as it is.
+
+On linux we use pyudev and traverse the USB hierarchy of USB devices, removing the parent ones that can be identified as hubs (they are parent of another device and where already traversed)
+
+On mac we find the microbits volumes by matching the serial number on the volume with the on in the USB. Otherwise the volume does not seem to be listed in system_profiler.
 
 TODO: have a rule to select the serial port used if more than one
 
@@ -17,10 +21,11 @@ import serial.tools.list_ports
 
 # Vendor IDs recognized as Arduino / Circuitpython boards
 VIDS = [
-	"0x0483", # STM32 BOOTLOADER PID : 57105
-	"0x239a", # Adafruit ?
-	"0x10c4", # serial to USB ?
-	"0x0d28", # micro:bit
+	0x0483, # STM32 BOOTLOADER PID : 57105
+	0x239a, # Adafruit
+	0x10c4, # serial to USB ?
+	0x0d28, # micro:bit
+	0x2341, # Arduino
 ]
 
 mainNames = ["code.txt","code.py","main.py","main.txt"]
@@ -40,118 +45,124 @@ if sys.platform == "darwin":
 		return outListe
 
 	def getDeviceList():
+		global remainingPorts
 		# system_profiler -json SPUSBDataType
 		ses = subprocess.check_output(["system_profiler","-json","SPUSBDataType"], stderr=subprocess.DEVNULL)
 		system_profile = json.loads(ses)
+		
+		# list the micro:bit virtual drives (that are somehow not in system_profiler)
+		bitsList = findMicroBits()
+
+		# list the existing ports
+		remainingPorts = list(filter(lambda x: x.vid != None, serial.tools.list_ports.comports()))
 	
 		# going recursively through all the devices
 		# extracting the important informations
 		# skipping the media infos and listing the volumes
 		def readSysProfile(profile,devices):
+			global remainingPorts
 			for subGroup in profile:
 				# go depth first
 				if "_items" in subGroup:
 					devices = readSysProfile(subGroup['_items'],devices)
 				subGroup['_items'] = None
 				# back to the device
-				device = {}
+				curDevice = {}
+				# vid is required
+				if 'vendor_id' not in subGroup:
+					continue
+				try:
+					vid = int(subGroup['vendor_id'].split(" ")[0],16)
+				except:
+					vid = 0
+					continue
+				curDevice['vendor_id'] = vid
+				# product id
+				try:
+					pid = int(subGroup['product_id'].strip().split(" ")[0],16)
+				except:
+					pid = 0
+				curDevice['product_id'] = pid
+				# serial number is not always present
+				if 'serial_num' in subGroup:
+					serial_num = subGroup['serial_num']
+				else:
+					serial_num = ""
+				curDevice['serial_num'] = serial_num
+				# manufacturer is kind of a mess sometimes
+				if 'manufacturer' in subGroup:
+					manufacturer = subGroup['manufacturer']
+				else:
+					manufacturer = ""
+				curDevice['manufacturer'] = manufacturer
+				# try to guess the port using the Location ID or Serial Number
+				ttys = []
+				for x in range(len(remainingPorts)):
+					port = remainingPorts[x]
+					# has SN, match it with the serial ports
+					if port.vid == vid and port.pid == pid \
+						and serial_num != "" and port.serial_number == serial_num:
+						ttys.append(port.device)
+						remainingPorts[x] = None
+					# no SN, use location ID with standard mac paths
+					elif serial_num == "":
+						import pprint
+						location = subGroup['location_id'][2:].split()[0]
+						locationStr = "/dev/cu.usbmodem"+location
+						if port.device.startswith(locationStr):
+							ttys.append(port.device)
+							remainingPorts[x] = None
+				remainingPorts = list(filter(lambda x:  x is not None, remainingPorts))
+				curDevice['ports'] = ttys
+				#
+				# now we select all the ones with a known VID or with an existing tty
+				# (or skip the others if you will) as soon as possible
+				#
+				if not (vid in VIDS or len(ttys)>0):
+					continue
 				# name needs no underscore
-				device['name'] = subGroup['_name']
-				# get all the variables
-				for ki in subGroup:
-					device[ki] = subGroup[ki]
-				# explore every media but don't save their parameters
-				device['volumes'] = []
+				curDevice['name'] = subGroup['_name']
+				# identify and add the micro:bit volumes
+				deviceVolumes = []
+				if curDevice['name'].find("micro:bit"):
+					if serial_num in bitsList:
+						bitvolume = {
+							'mount_point': bitsList[serial_num],
+							'mains': [],
+						}
+						deviceVolumes.append(bitvolume)
+				# list the volume(s) and the circtuipython run files
+				version = ""
 				if 'Media' in subGroup:
 					for media in subGroup['Media']:
 						if "volumes" in media:
-							# list all the volumes of the media (looking for CIRCUITPY and such)
+							# list all the volumes of the media
 							for volume in media['volumes']:
-								device['volumes'].append(volume)
-				devices += [device]
+								if 'mount_point' in volume:
+									mount = volume['mount_point']
+									if mount != "":
+										mains = []
+										for mainFile in mainNames:
+											if os.path.exists(os.path.join(mount,mainFile)):
+												mains += [mainFile]
+										deviceVolumes.append({
+											'mount_point': mount,
+											'mains': mains,
+										})
+									boot_out = os.path.join(mount, "boot_out.txt")
+									try:
+										with open(boot_out) as boot:
+											circuit_python, _ = boot.read().split(";")
+											version = circuit_python.split(" ")[-3]
+									except (FileNotFoundError,ValueError,IndexError):
+										pass
+				curDevice['volumes'] = deviceVolumes
+				curDevice['version'] = version
+				devices += [curDevice]
 			return devices
-	
-		devicesInfo = readSysProfile(system_profile['SPUSBDataType'],[])
-	
-		# list the existing ports
-		remainingPorts = list(filter(lambda x: x.vid != None, serial.tools.list_ports.comports()))
-
-		# list the micro:bit virtual drives (that are somehow not in system_profiler)
-		bitsList = findMicroBits()
-	
-		# loop through the devices to extract some useful data then handle the good ones
-		deviceList = []
-		for dev in devicesInfo:
-			# vid is required
-			if 'vendor_id' not in dev:
-				continue
-			try:
-				vid = int(dev['vendor_id'].split(" ")[0],16)
-			except:
-				continue
-			# product id
-			try:
-				pid = int(dev['product_id'].strip().split(" ")[0],16)
-			except:
-				pid = 0
-			# serial number is not always present
-			if not 'serial_num' in dev:
-				dev['serial_num'] = ""
-			serial_num = dev['serial_num']
-			# try to guess the port using the Location ID or Serial Number
-			ttys = []
-			for x in range(len(remainingPorts)):
-				port = remainingPorts[x]
-				if port.vid == vid and port.pid == pid \
-					and port.serial_number == serial_num:
-					ttys.append(port.device)
-					remainingPorts[x] = None
-			remainingPorts = list(filter(lambda x:  x is not None, remainingPorts))
-			dev['ports'] = ttys
-			#
-			# now we select all the ones with a known VID or with an existing tty
-			# (or skip the others if you will) as soon as possible
-			#
-			isABoard = any([dev['vendor_id'].find(x)>=0 for x in VIDS]) or len(dev['ports'])>0
-			if not isABoard:
-				continue
-			#
-			# manufacturer is kind of a mess sometimes
-			if 'manufacturer' in dev:
-				manufacturer = dev['manufacturer']
-			else:
-				manufacturer = ""
-			# identify and add the micro:bit volumes
-			if dev['name'].find("micro:bit"):
-				if dev['serial_num'] in bitsList:
-					bitvolume = {
-						'mount_point': bitsList[dev['serial_num']]
-					}
-					dev['volumes'].append(bitvolume)
-			# list the volume(s) and the circtuipython run files
-			deviceVolumes = []
-			for volume in dev['volumes']:
-				if 'mount_point' in volume:
-					mount = volume['mount_point']
-					if mount != "":
-						mains = []
-						for mainFile in mainNames:
-							if os.path.exists(os.path.join(mount,mainFile)):
-								mains += [mainFile]
-						deviceVolumes.append({
-							'mount_point': mount,
-							'mains': mains,
-						})
-			# add the device to the list
-			curDevice = {}
-			curDevice['volumes'] = deviceVolumes
-			curDevice['product_id'] = pid
-			curDevice['vendor_id'] = vid
-			curDevice['serial_num'] = serial_num
-			curDevice['ports'] = ttys
-			curDevice['manufacturer'] = manufacturer
-			curDevice['name'] = dev['name']
-			deviceList.append(curDevice)
+		
+		# list the devices
+		deviceList = readSysProfile(system_profile['SPUSBDataType'],[])
 		rp = [port.device for port in remainingPorts]
 		return (deviceList,rp)
 

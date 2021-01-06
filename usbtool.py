@@ -20,7 +20,6 @@ NOIRSURGRIS= '\033[7;40;39m'
 BLUEONWHITE= '\033[7;44;39m'
 
 CIRCUP_COMMAND = ["circup"]
-CIRCUP_COMMAND = ["python3","../circup/circup.py"]
 
 # print the text from main
 def displayTheText(list,ports=[]):
@@ -46,6 +45,8 @@ def displayTheText(list,ports=[]):
 				outText += ("\t"+volume['mount_point'])
 				for main in volume['mains']:
 					outText += (" ("+main+")")
+				if dev['version']:
+					outText += " v"+dev['version']
 				outText += ("\n")
 	print(outText.rstrip())
 	# print remaining tty ports not accounted for
@@ -166,7 +167,9 @@ def main():
 	# compute the data
 	deviceList,remainingPorts = usbinfos.getDeviceList()
 	# print the reminder
-	print(BLUEONWHITE+BOLD+" -n name -s serial number -m mount volume -a auto "+ENDC)
+	print(BLUEONWHITE+BOLD+" -n name -s serial number -m mount volume"
+		" -a auto -b backup -w wait "+ENDC+"\n"
+		+BLUEONWHITE+BOLD+" -e eject -c \"circup arguments\" "+ENDC)
 	# print the text
 	displayTheText(deviceList,remainingPorts)
 	
