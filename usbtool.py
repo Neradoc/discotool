@@ -55,17 +55,15 @@ def displayTheText(list,ports=[]):
 		print(" ".join(ports))
 
 # execute tio and exit
-def connect_with_tio_and_exit(port,name):
+def connect_with_tio(port,name):
 	command = ["tio",port]
 	print(CYAN+BOLD+"- Connecting to",name,"-"*(56-len(name))+ENDC)
 	print(BOLD+"> "+ENDC+" ".join(command))
 	print(CYAN+" "+" ↓ "*24+ENDC)
 	subprocess.call(command)
-	print("Fin.")
-	exit(0)
 
 # run tio from the commands
-def run_command_and_exit(deviceList,args):
+def run_command_selector(deviceList,args):
 	# normalize the inputs
 	name = args.name.lower()
 	sn = args.sn.lower()
@@ -102,9 +100,7 @@ def run_command_and_exit(deviceList,args):
 		if backup != None and sn=="" and name=="" and mount=="":
 			selectedDevices = deviceList
 		else:
-			if sn!="" or name!="" or mount!="":
-				print(PURPLE+"No device selected"+ENDC)
-			return
+			return []
 	# do something with the found ones
 	if backup != None:
 		print(GREEN+BOLD+"- BACKING UP "+"-"*60+ENDC)
@@ -128,7 +124,7 @@ def run_command_and_exit(deviceList,args):
 				print("Ejection de "+volumeName)
 				subprocess.call(command)
 	# run tio after all that
-	if backup == None and not eject:
+	elif backup == None and not eject:
 		if args.circup:
 			for device in selectedDevices:
 				for volume in device['volumes']:
@@ -142,8 +138,11 @@ def run_command_and_exit(deviceList,args):
 						break
 		else:
 			for device in selectedDevices:
-				connect_with_tio_and_exit(device['ports'][0],device['name'])
+				connect_with_tio(device['ports'][0],device['name'])
+				print("Fin.")
+				break
 	# nothing found, or nothing to do
+	return selectedDevices
 
 def main():
 	import argparse, subprocess
@@ -178,17 +177,22 @@ def main():
 		print("Wait until the device is available")
 		while True:
 			# try running tio
-			run_command_and_exit(deviceList,args)
+			ret = run_command_selector(deviceList,args)
 			# mark time
-			print(".",end="")
-			sys.stdout.flush()
-			# loop slowly
-			time.sleep(1)
-			# re scan the device
-			deviceList,remainingPorts = usbinfos.getDeviceList()
+			if len(ret) == 0:
+				print(".",end="")
+				sys.stdout.flush()
+				# loop slowly
+				time.sleep(1)
+				# re scan the device
+				deviceList,remainingPorts = usbinfos.getDeviceList()
+			else:
+				break
 	else:
-		# try running tio
-		run_command_and_exit(deviceList,args)
+		# run the commands once
+		ret = run_command_selector(deviceList,args)
+		if len(ret) == 0:
+			print(PURPLE+"No device selected"+ENDC)
 
 if __name__ == "__main__":
 	main()
