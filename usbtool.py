@@ -19,7 +19,14 @@ FONDGRIS   = '\033[47m'
 NOIRSURGRIS= '\033[7;40;39m'
 BLUEONWHITE= '\033[7;44;39m'
 
+# command line to connect to the REPL (screen,tio)
+SCREEN_COMMAND = ["screen"]
+# command line to call circup
 CIRCUP_COMMAND = ["circup"]
+
+# override configuration constants with config.py
+if os.path.exists("config.py"):
+	from config import *
 
 # print the text from main
 def displayTheText(list,ports=[]):
@@ -54,23 +61,22 @@ def displayTheText(list,ports=[]):
 		print(BOLD+"--","Unknown Serial Ports","-"*50,ENDC)
 		print(" ".join(ports))
 
-# execute tio and exit
-def connect_with_tio(port,name):
-	command = ["tio",port]
-	print(CYAN+BOLD+"- Connecting to",name,"-"*(56-len(name))+ENDC)
-	print(BOLD+"> "+ENDC+" ".join(command))
-	print(CYAN+" "+" ↓ "*24+ENDC)
-	subprocess.call(command)
-
-# run tio from the commands
+# interpret the arguments and run whatever needs to be run
 def run_command_selector(deviceList,args):
 	# normalize the inputs
-	name = args.name.lower()
-	sn = args.sn.lower()
-	mount = args.mount.lower()
+	name = args.name.lower().strip()
+	sn = args.sn.lower().strip()
+	mount = args.mount.lower().strip()
 	auto = args.auto
 	eject = args.eject
 	backup = args.backup
+	# differenciate "nothing found" and "nothing asked"
+	if sn=="" and name=="" and mount=="" and not auto:
+		noCriteria = True
+	else:
+		noCriteria = False
+	#
+	# Part 1: selecting devices (or not)
 	#
 	selectedDevices = []
 	# only one device and "--auto", connect to it
@@ -95,61 +101,69 @@ def run_command_selector(deviceList,args):
 				if 'mount_point' in volume \
 					and volume['mount_point'].lower().find(mount) >= 0:
 					selectedDevices.append(device)
-	# if no selection pick all for backup
-	if len(selectedDevices)==0:
-		if backup != None and sn=="" and name=="" and mount=="":
-			selectedDevices = deviceList
-		else:
-			return []
-	# do something with the found ones
+	#
+	# Part 2: doing something
+	#
+	print(args.circup)
+	# backup the selection of devices found, everything if no criteria
+	# NOTE: runs before circup
 	if backup != None:
 		print(GREEN+BOLD+"- BACKING UP "+"-"*60+ENDC)
+		if noCriteria:
+			selectedDevices = deviceList
 		for device in selectedDevices:
 			for volume in device['volumes']:
 				volume_src = volume['mount_point']
-				boot_out = volume_src + "/boot_out.txt"
-				if os.path.exists(boot_out):
+				if os.path.exists(volume_src):
 					container_name = re.sub(r"[^A-Za-z0-9]","_",device['name']).strip("_")
 					container_name += "_SN"+device['serial_num']
 					container = os.path.join(backup,container_name)
 					print("Backing up",volume_src,"to\n",container)
 					shutil.copytree(volume_src,container,dirs_exist_ok = True)
-	# eject the selection of devices found
+	# run circup with the provided argument list
+	if args.circup:
+		for device in selectedDevices:
+			for volume in device['volumes']:
+				volume_src = volume['mount_point']
+				if os.path.exists(volume_src):
+					command = CIRCUP_COMMAND+["--path",volume_src]
+					command += re.split(" +",args.circup[0])
+					print(CYAN+BOLD+"- Running circup on",name,"-"*(56-len(device['name']))+ENDC)
+					print(BOLD+"> "+ENDC+" ".join(command))
+					subprocess.call(command)
+					break
+	# connect to the REPL by default
+	if backup == None and args.circup == None:
+		for device in selectedDevices:
+			port = device['ports'][0]
+			name = device['name']
+			command = SCREEN_COMMAND + [port]
+			print(CYAN+BOLD+"- Connecting to",name,"-"*(56-len(name))+ENDC)
+			print(BOLD+"> "+ENDC+" ".join(command))
+			print(CYAN+" "+" ↓ "*24+ENDC)
+			subprocess.call(command)
+			print("Fin.")
+			break
+	# eject the selection of devices found, everything if no criteria
 	if eject:
 		print(PURPLE+BOLD+"- EJECTING DRIVES "+"-"*55+ENDC)
+		if noCriteria:
+			selectedDevices = deviceList
 		for device in selectedDevices:
 			for volume in device['volumes']:
 				volumeName = os.path.basename(volume['mount_point'])
 				command = ["osascript", "-e", "tell application \"Finder\" to eject \"{}\"".format(volumeName)]
 				print("Ejection de "+volumeName)
 				subprocess.call(command)
-	# run tio after all that
-	elif backup == None and not eject:
-		if args.circup:
-			for device in selectedDevices:
-				for volume in device['volumes']:
-					volume_src = volume['mount_point']
-					if os.path.exists(volume_src):
-						command = CIRCUP_COMMAND+["--path",volume_src]
-						command += re.split(" +",args.circup[0])
-						print(CYAN+BOLD+"- Running circup on",name,"-"*(56-len(device['name']))+ENDC)
-						print(BOLD+"> "+ENDC+" ".join(command))
-						subprocess.call(command)
-						break
-		else:
-			for device in selectedDevices:
-				connect_with_tio(device['ports'][0],device['name'])
-				print("Fin.")
-				break
 	# nothing found, or nothing to do
 	return selectedDevices
 
 def main():
 	import argparse, subprocess
 	parser = argparse.ArgumentParser()
-	parser.add_argument('--name','-n',help="Device name to connect to with tio",default="")
-	parser.add_argument('--sn','-s',help="Device serial number to connect to",default="")
-	parser.add_argument('--mount','-m',help="Mount path used by the device to connect to",default="")
+	parser.add_argument('--name','-n',help="Device name to select",default="")
+	parser.add_argument('--sn','-s',help="Device serial number to select",default="")
+	parser.add_argument('--mount','-m',help="Mount path used by the device to select",default="")
 	parser.add_argument('--auto','-a',help="Open the device if there's only one",action='store_true')
 	parser.add_argument('--wait','-w',help="Keep scanning until a device matches",action='store_true')
 	parser.add_argument('--eject','-e',help="Eject the disk volume(s) from the matching device",action='store_true')
@@ -166,17 +180,15 @@ def main():
 	# compute the data
 	deviceList,remainingPorts = usbinfos.getDeviceList()
 	# print the reminder
-	print(BLUEONWHITE+BOLD+" -n name -s serial number -m mount volume"
-		" -a auto -b backup -w wait "+ENDC+"\n"
-		+BLUEONWHITE+BOLD+" -e eject -c \"circup arguments\" "+ENDC)
+	print(BLUEONWHITE+BOLD+" -n name -s serial number -m mount volume -a auto "+ENDC+"\n"+BLUEONWHITE+BOLD+" -b backup -w wait -e eject -c \"circup arguments\" "+ENDC)
 	# print the text
 	displayTheText(deviceList,remainingPorts)
 	
-	# run tio from the commands
+	# run the commands (wait)
 	if wait:
 		print("Wait until the device is available")
 		while True:
-			# try running tio
+			# try finding a device and doing something with it
 			ret = run_command_selector(deviceList,args)
 			# mark time
 			if len(ret) == 0:
