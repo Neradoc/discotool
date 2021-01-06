@@ -3,6 +3,7 @@
 import os, glob, json, time, sys
 import subprocess, shutil, re, errno
 import usbinfos
+import click
 
 # my usual color print copy and pasted stuff
 
@@ -61,23 +62,8 @@ def displayTheText(list,ports=[]):
 		print(BOLD+"--","Unknown Serial Ports","-"*50,ENDC)
 		print(" ".join(ports))
 
-# interpret the arguments and run whatever needs to be run
-def run_command_selector(deviceList,args):
-	# normalize the inputs
-	name = args.name.lower().strip()
-	sn = args.sn.lower().strip()
-	mount = args.mount.lower().strip()
-	auto = args.auto
-	eject = args.eject
-	backup = args.backup
-	# differenciate "nothing found" and "nothing asked"
-	if sn=="" and name=="" and mount=="" and not auto:
-		noCriteria = True
-	else:
-		noCriteria = False
-	#
-	# Part 1: selecting devices (or not)
-	#
+# interpret the arguments and select devices based on that
+def find_the_devices(deviceList,auto,wait,name,serial,mount):
 	selectedDevices = []
 	# only one device and "--auto", connect to it
 	if auto and len(deviceList) == 1:
@@ -89,10 +75,10 @@ def run_command_selector(deviceList,args):
 			if device_name.find(name) >= 0:
 				selectedDevices.append(device)
 	# device selected by its serial number (first one found that matches)
-	if sn != "":
+	if serial != "":
 		for device in deviceList:
 			serial_number = device['serial_num'].lower()
-			if serial_number.find(sn) >= 0:
+			if serial_number.find(serial) >= 0:
 				selectedDevices.append(device)
 	# device selected by its drive path (first one that matches)
 	if mount != "":
@@ -101,110 +87,186 @@ def run_command_selector(deviceList,args):
 				if 'mount_point' in volume \
 					and volume['mount_point'].lower().find(mount) >= 0:
 					selectedDevices.append(device)
+	return selectedDevices
+
+@click.group(invoke_without_command=True)
+@click.option(
+	"--auto","-a",
+	is_flag=True, help="Pick the first board found."
+)
+@click.option(
+	"--wait","-w",
+	is_flag=True, help="Scan the boards until one match is found."
+)
+@click.option(
+	"--name","-n",
+	default="",
+	help="Select a device by searching in its name field.",
+)
+@click.option(
+	"--serial","-s",
+	default="",
+	help="Select a device by searching in its serial number.",
+)
+@click.option(
+	"--mount","-m",
+	default="",
+	help="Select a device by matching the path to its associated mount.",
+)
+@click.pass_context
+def main(ctx,auto,wait,name,serial,mount):
+	ctx.ensure_object(dict)
+	# normalize the inputs
+	name = name.lower().strip()
+	serial = serial.lower().strip()
+	mount = mount.lower().strip()
+	# differenciate "nothing found" and "nothing asked"
+	if serial=="" and name=="" and mount=="" and not auto:
+		noCriteria = True
+	else:
+		noCriteria = False
+	ctx.obj["noCriteria"] = noCriteria
+	# compute the data
+	deviceList,remainingPorts = usbinfos.getDeviceList()
+	# print the reminder
+	print(BLUEONWHITE+BOLD+" -n name -s serial number -m mount volume -a auto -w wait "+ENDC+"\n"+BLUEONWHITE+BOLD+" commands: backup eject circup "+ENDC)
+	# print the text
+	displayTheText(deviceList,remainingPorts)
 	#
-	# Part 2: doing something
-	#
-	print(args.circup)
-	# backup the selection of devices found, everything if no criteria
-	# NOTE: runs before circup
-	if backup != None:
-		print(GREEN+BOLD+"- BACKING UP "+"-"*60+ENDC)
-		if noCriteria:
-			selectedDevices = deviceList
-		for device in selectedDevices:
-			for volume in device['volumes']:
-				volume_src = volume['mount_point']
-				if os.path.exists(volume_src):
-					container_name = re.sub(r"[^A-Za-z0-9]","_",device['name']).strip("_")
-					container_name += "_SN"+device['serial_num']
-					container = os.path.join(backup,container_name)
-					print("Backing up",volume_src,"to\n",container)
-					shutil.copytree(volume_src,container,dirs_exist_ok = True)
-	# run circup with the provided argument list
-	if args.circup:
-		for device in selectedDevices:
-			for volume in device['volumes']:
-				volume_src = volume['mount_point']
-				if os.path.exists(volume_src):
-					command = CIRCUP_COMMAND+["--path",volume_src]
-					command += re.split(" +",args.circup[0])
-					print(CYAN+BOLD+"- Running circup on",name,"-"*(56-len(device['name']))+ENDC)
-					print(BOLD+"> "+ENDC+" ".join(command))
-					subprocess.call(command)
-					break
-	# connect to the REPL by default
-	if backup == None and args.circup == None:
-		for device in selectedDevices:
-			port = device['ports'][0]
-			name = device['name']
-			command = SCREEN_COMMAND + [port]
-			print(CYAN+BOLD+"- Connecting to",name,"-"*(56-len(name))+ENDC)
-			print(BOLD+"> "+ENDC+" ".join(command))
-			print(CYAN+" "+" ↓ "*24+ENDC)
-			subprocess.call(command)
-			print("Fin.")
-			break
-	# eject the selection of devices found, everything if no criteria
-	if eject:
+	# wait until the device pops up
+	if wait:
+		print("Wait until the device is available")
+		while True:
+			try:
+			# try finding a device
+				selectedDevices = find_the_devices(deviceList,auto,wait,name,serial,mount)
+				if len(selectedDevices) == 0:
+					print(".",end="")
+					sys.stdout.flush()
+					# loop slowly
+					time.sleep(1)
+					# re scan the device
+					deviceList,remainingPorts = usbinfos.getDeviceList()
+				else:
+					ctx.obj["deviceList"] = deviceList
+					ctx.obj["remainingPorts"] = remainingPorts
+					ctx.obj["selectedDevices"] = selectedDevices
+			except KeyboardInterrupt:
+				break
+	else:
+		# find only once
+		selectedDevices = find_the_devices(deviceList,auto,wait,name,serial,mount)
+		ctx.obj["deviceList"] = deviceList
+		ctx.obj["remainingPorts"] = remainingPorts
+		ctx.obj["selectedDevices"] = selectedDevices
+	
+	# here we exit and run the command, or if no command, go to repl
+	if ctx.invoked_subcommand is None:
+		ctx.invoke(repl)
+
+@main.command()
+@click.pass_context
+def repl(ctx):
+	"""
+	Connect to the REPL
+	"""
+	selectedDevices = ctx.obj["selectedDevices"]
+	for device in selectedDevices:
+		port = device['ports'][0]
+		name = device['name']
+		command = SCREEN_COMMAND + [port]
+		print(CYAN+BOLD+"- Connecting to",name,"-"*(56-len(name))+ENDC)
+		print(BOLD+"> "+ENDC+" ".join(command))
+		print(CYAN+" "+" ↓ "*24+ENDC)
+		subprocess.call(command)
+		print("Fin.")
+
+
+@main.command()
+@click.pass_context
+def eject(ctx):
+	"""
+	Eject the disk volume(s) from the matching device
+	"""
+	deviceList = ctx.obj["deviceList"]
+	selectedDevices = ctx.obj["selectedDevices"]
+	if ctx.obj["noCriteria"]:
+		selectedDevices = deviceList
+	if len(selectedDevices) == 0:
+		print(PURPLE+"No device selected"+ENDC)
+	else:
 		print(PURPLE+BOLD+"- EJECTING DRIVES "+"-"*55+ENDC)
-		if noCriteria:
-			selectedDevices = deviceList
 		for device in selectedDevices:
 			for volume in device['volumes']:
 				volumeName = os.path.basename(volume['mount_point'])
 				command = ["osascript", "-e", "tell application \"Finder\" to eject \"{}\"".format(volumeName)]
 				print("Ejection de "+volumeName)
 				subprocess.call(command)
-	# nothing found, or nothing to do
-	return selectedDevices
-
-def main():
-	import argparse, subprocess
-	parser = argparse.ArgumentParser()
-	parser.add_argument('--name','-n',help="Device name to select",default="")
-	parser.add_argument('--sn','-s',help="Device serial number to select",default="")
-	parser.add_argument('--mount','-m',help="Mount path used by the device to select",default="")
-	parser.add_argument('--auto','-a',help="Open the device if there's only one",action='store_true')
-	parser.add_argument('--wait','-w',help="Keep scanning until a device matches",action='store_true')
-	parser.add_argument('--eject','-e',help="Eject the disk volume(s) from the matching device",action='store_true')
-	parser.add_argument('--backup','-b',help="Backup copy of all Circuipython drives found into the given directory",default=None)
-	parser.add_argument('--circup','-c',help="Call circup on the selected board with the rest of the options",nargs=1)
-	args = parser.parse_args()
 	
-	wait = args.wait
-	# exit now if the backup directory does not exist
-	if args.backup != None and not os.path.exists(args.backup):
-		print(RED+BOLD+os.strerror(errno.ENOENT)+": "+args.backup+ENDC)
-		exit(errno.ENOENT)
-	
-	# compute the data
-	deviceList,remainingPorts = usbinfos.getDeviceList()
-	# print the reminder
-	print(BLUEONWHITE+BOLD+" -n name -s serial number -m mount volume -a auto "+ENDC+"\n"+BLUEONWHITE+BOLD+" -b backup -w wait -e eject -c \"circup arguments\" "+ENDC)
-	# print the text
-	displayTheText(deviceList,remainingPorts)
-	
-	# run the commands (wait)
-	if wait:
-		print("Wait until the device is available")
-		while True:
-			# try finding a device and doing something with it
-			ret = run_command_selector(deviceList,args)
-			# mark time
-			if len(ret) == 0:
-				print(".",end="")
-				sys.stdout.flush()
-				# loop slowly
-				time.sleep(1)
-				# re scan the device
-				deviceList,remainingPorts = usbinfos.getDeviceList()
-			else:
-				break
+@main.command()
+@click.argument(
+	"backup_dir",
+	type=click.Path(exists=True, file_okay=False),
+)
+@click.argument(
+	"subdir",
+	required=False,
+)
+@click.pass_context
+def backup(ctx,backup_dir,subdir):
+	"""
+	Backup copy of all (Circuipython) drives found into the given directory
+	"""
+	deviceList = ctx.obj["deviceList"]
+	selectedDevices = ctx.obj["selectedDevices"]
+	if ctx.obj["noCriteria"]:
+		selectedDevices = deviceList
+	if len(selectedDevices) == 0:
+		print(PURPLE+"No device selected"+ENDC)
 	else:
-		# run the commands once
-		ret = run_command_selector(deviceList,args)
-		if len(ret) == 0:
-			print(PURPLE+"No device selected"+ENDC)
+		print(GREEN+BOLD+"- BACKING UP "+"-"*60+ENDC)
+		for device in selectedDevices:
+			for volume in device['volumes']:
+				volume_src = volume['mount_point']
+				if os.path.exists(volume_src):
+					container_name = re.sub(r"[^A-Za-z0-9]","_",device['name']).strip("_")
+					container_name += "_SN"+device['serial_num']
+					container = os.path.join(backup_dir,container_name)
+					print("Backing up",volume_src,"to\n",container)
+					shutil.copytree(volume_src,container,dirs_exist_ok = True)
 
+@main.command()
+@click.argument(
+	"circup_options",
+	nargs=-1,
+)
+@click.pass_context
+def circup(ctx,circup_options):
+	"""
+	Call circup on the selected board with the given options
+	"""
+	selectedDevices = ctx.obj["selectedDevices"]
+	for device in selectedDevices:
+		name = device['name']
+		for volume in device['volumes']:
+			volume_src = volume['mount_point']
+			if os.path.exists(volume_src):
+				command = CIRCUP_COMMAND+["--path",volume_src]
+				command += list(circup_options)
+				print(CYAN+BOLD+"- Running circup on",name,"-"*(56-len(device['name']))+ENDC)
+				print(BOLD+"> "+ENDC+" ".join(command))
+				subprocess.call(command)
+				break
+
+@main.command()
+@click.argument("circup_options", nargs=-1)
+@click.pass_context
+def cu(ctx,circup_options):
+	"""
+	Alias to circup
+	"""
+	ctx.invoke(circup,circup_options=circup_options)
+
+# Allows execution via `python -m circup ...`
 if __name__ == "__main__":
 	main()
