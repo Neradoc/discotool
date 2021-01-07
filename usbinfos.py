@@ -185,6 +185,8 @@ elif sys.platform == "linux":
 		for device in devices:
 			curDevice = {}
 			deviceVolumes = []
+			if device.properties['TYPE'].split("/")[0] == "9":
+				continue
 			name = device.get('ID_MODEL')
 			vid = int(device.get('ID_VENDOR_ID'),16)
 			SN = device.get('ID_SERIAL_SHORT','')
@@ -214,7 +216,7 @@ elif sys.platform == "linux":
 			# go through parents and find "devpath", remove matching parents
 			def noParent(dev):
 				for papa in device.traverse():
-					if dev['devpath'] == papa.get('DEVPATH'):
+					if devpath.startswith(papa.get('DEVPATH')):
 						return False
 				return True
 			deviceList = list(filter(noParent,deviceList))
