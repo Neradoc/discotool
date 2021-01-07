@@ -26,8 +26,10 @@ SCREEN_COMMAND = ["screen"]
 CIRCUP_COMMAND = ["circup"]
 
 # override configuration constants with config.py
-if os.path.exists("config.py"):
+try:
 	from config import *
+except:
+	pass
 
 # print the text from main
 def displayTheBoardsList(bList, ports=[]):
