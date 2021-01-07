@@ -232,8 +232,8 @@ def backup(ctx, backup_dir, sub_dir):
 	if sub_dir:
 		sub_dir = sub_dir.replace("/","")
 		targetDir = os.path.join(backup_dir, sub_dir)
-		if not os.exists(targetDir):
-			os.chdir(targetDir)
+		if not os.path.exists(targetDir):
+			os.mkdir(targetDir)
 	else:
 		targetDir = backup_dir
 	if len(selectedDevices) == 0:
@@ -246,7 +246,7 @@ def backup(ctx, backup_dir, sub_dir):
 				if os.path.exists(volume_src):
 					container_name = re.sub(r"[^A-Za-z0-9]","_",device['name']).strip("_")
 					container_name += "_SN"+device['serial_num']
-					container = os.path.join(backup_dir, container_name)
+					container = os.path.join(targetDir, container_name)
 					click.echo("Backing up "+volume_src+" to\n "+container)
 					shutil.copytree(volume_src, container, dirs_exist_ok = True)
 
