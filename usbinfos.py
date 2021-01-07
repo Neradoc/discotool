@@ -1,11 +1,16 @@
 #!/usr/bin/env python3
 
 """
-Liste les appareils USB adafruit et trouve leur mountpoint et port série USB
+Find and list USB devices that have a serial port or a certain vendor ID
+Match the devices with the serial port and mount point if possible
 
-On MacOS I found no way to use pure python (pyusb, pyserial, psutil, etc.) to link the drive and it's USB device, so instead we have to call a system specific command (system_profiler) as unsatisfying as it is.
+The main objective is to get informations about Circuitpython boards in particular and Arduino, Adafruit, and microcontroller boards in general
 
-On linux we use pyudev and traverse the USB hierarchy of USB devices, removing the parent ones that can be identified as hubs (they are parent of another device and where already traversed)
+I found no way to use pure python (pyusb, pyserial, psutil, etc.) to link the drive and it's USB device.
+
+On MacOS we have to call a system specific command (system_profiler). At least it outputs json. We find the serial ports by comparing vid, pid and serial number or location_id with the information from pyserial.
+
+On linux we use pyudev and traverse the USB hierarchy of USB devices, removing the parent ones that can be identified as hubs.
 
 On mac we find the microbits volumes by matching the serial number on the volume with the on in the USB. Otherwise the volume does not seem to be listed in system_profiler.
 
@@ -18,6 +23,10 @@ the API:
 import os, glob, json, sys
 import subprocess
 import serial.tools.list_ports
+
+if sys.platform == "linux":
+	import psutil
+	import pyudev
 
 # Vendor IDs recognized as Arduino / Circuitpython boards
 VIDS = [
@@ -167,8 +176,6 @@ if sys.platform == "darwin":
 		return (deviceList,rp)
 
 elif sys.platform == "linux":
-	import psutil
-	import pyudev
 
 	def getDeviceList():
 		# get drives by mountpoint
@@ -185,6 +192,7 @@ elif sys.platform == "linux":
 		for device in devices:
 			curDevice = {}
 			deviceVolumes = []
+			# skip devices that have a base class of 09 (hubs)
 			if device.properties['TYPE'].split("/")[0] == "9":
 				continue
 			name = device.get('ID_MODEL')
