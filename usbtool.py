@@ -56,11 +56,11 @@ def displayTheBoardsList(bList, ports=[]):
 				if dev['version']:
 					outText += " v"+dev['version']
 				outText += ("\n")
-	print(outText.rstrip())
+	click.echo(outText.rstrip())
 	# print remaining tty ports not accounted for
 	if len(ports) > 0:
-		print(BOLD+"--","Unknown Serial Ports","-"*50,ENDC)
-		print(" ".join(ports))
+		click.echo(BOLD+"--"+" Unknown Serial Ports "+"-"*50+ENDC)
+		click.echo(" ".join(ports))
 
 # interpret the arguments and select devices based on that
 def find_the_devices(deviceList, auto, wait, name, serial, mount):
@@ -92,11 +92,11 @@ def find_the_devices(deviceList, auto, wait, name, serial, mount):
 @click.group(invoke_without_command=True)
 @click.option(
 	"--auto", "-a",
-	is_flag=True, help="Pick the first board found."
+	is_flag=True, help="Pick the first board found for commands."
 )
 @click.option(
 	"--wait", "-w",
-	is_flag=True, help="Scan the boards until one match is found."
+	is_flag=True, help="Scan the boards until one match is found. Warning: does not wait for the board's drive to be mounted."
 )
 @click.option(
 	"--name", "-n",
@@ -126,11 +126,11 @@ def main(ctx, auto, wait, name, serial, mount):
 	# compute the data
 	deviceList, remainingPorts = usbinfos.getDeviceList()
 	# print the reminder
-	print(GREY+"Filters: --name --serial --mount --auto --wait "+ENDC+"\n"+GREY+"Commands: list, repl, eject, backup <to_dir>, circup <options> "+ENDC)
+	click.echo(GREY+"Filters: --name --serial --mount --auto --wait "+ENDC+"\n"+GREY+"Commands: list, repl, eject, backup <to_dir>, circup <options> "+ENDC)
 	#
 	# wait until the device pops up
 	if wait:
-		print("Wait until the device is available")
+		click.echo("Wait until the device is available")
 		while True:
 			try:
 			# try finding a device
@@ -139,7 +139,7 @@ def main(ctx, auto, wait, name, serial, mount):
 				else:
 					selectedDevices = find_the_devices(deviceList, auto, wait, name, serial, mount)
 				if len(selectedDevices) == 0:
-					print(".",end="")
+					click.echo(".",nl=False)
 					sys.stdout.flush()
 					# loop slowly
 					time.sleep(1)
@@ -189,11 +189,11 @@ def repl(ctx):
 		port = device['ports'][0]
 		name = device['name']
 		command = SCREEN_COMMAND + [port]
-		print(CYAN+BOLD+"- Connecting to",name,"-"*(56-len(name))+ENDC)
-		print(BOLD+"> "+ENDC+" ".join(command))
-		print(CYAN+" "+" ↓ "*24+ENDC)
+		click.echo(CYAN+BOLD+"- Connecting to "+name+" "+"-"*(56-len(name))+ENDC)
+		click.echo(BOLD+"> "+ENDC+" ".join(command))
+		click.echo(CYAN+" "+" ↓ "*24+ENDC)
 		subprocess.call(command)
-		print("Fin.")
+		click.echo("Fin.")
 
 
 @main.command()
@@ -204,14 +204,14 @@ def eject(ctx):
 	"""
 	selectedDevices = ctx.obj["selectedDevices"]
 	if len(selectedDevices) == 0:
-		print(PURPLE+"No device selected"+ENDC)
+		click.echo(PURPLE+"No device selected"+ENDC)
 	else:
-		print(PURPLE+BOLD+"- EJECTING DRIVES "+"-"*55+ENDC)
+		click.echo(PURPLE+BOLD+"- EJECTING DRIVES "+"-"*55+ENDC)
 		for device in selectedDevices:
 			for volume in device['volumes']:
 				volumeName = os.path.basename(volume['mount_point'])
 				command = ["osascript", "-e", "tell application \"Finder\" to eject \"{}\"".format(volumeName)]
-				print("Ejection de "+volumeName)
+				click.echo("Ejection de "+volumeName)
 				subprocess.call(command)
 	
 @main.command()
@@ -237,9 +237,9 @@ def backup(ctx, backup_dir, sub_dir):
 	else:
 		targetDir = backup_dir
 	if len(selectedDevices) == 0:
-		print(PURPLE+"No device selected"+ENDC)
+		click.echo(PURPLE+"No device selected"+ENDC)
 	else:
-		print(GREEN+BOLD+"- BACKING UP "+"-"*60+ENDC)
+		click.echo(GREEN+BOLD+"- BACKING UP "+"-"*60+ENDC)
 		for device in selectedDevices:
 			for volume in device['volumes']:
 				volume_src = volume['mount_point']
@@ -247,7 +247,7 @@ def backup(ctx, backup_dir, sub_dir):
 					container_name = re.sub(r"[^A-Za-z0-9]","_",device['name']).strip("_")
 					container_name += "_SN"+device['serial_num']
 					container = os.path.join(backup_dir, container_name)
-					print("Backing up",volume_src,"to\n",container)
+					click.echo("Backing up "+volume_src+" to\n "+container)
 					shutil.copytree(volume_src, container, dirs_exist_ok = True)
 
 @main.command()
@@ -265,8 +265,8 @@ def circup(ctx, circup_options):
 			if os.path.exists(volume_src):
 				command = CIRCUP_COMMAND+["--path", volume_src]
 				command += [x for x in circup_options]
-				print(CYAN+BOLD+"- Running circup on",name,"-"*(56-len(device['name']))+ENDC)
-				print(BOLD+"> "+ENDC+" ".join(command))
+				click.echo(CYAN+BOLD+"- Running circup on "+name+" "+"-"*(56-len(device['name']))+ENDC)
+				click.echo(BOLD+"> "+ENDC+" ".join(command))
 				subprocess.call(command)
 				break
 
