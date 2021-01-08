@@ -8,7 +8,7 @@ The main objective is to get informations about Circuitpython boards in particul
 
 I found no way to use pure python (pyusb, pyserial, psutil, etc.) to link the drive and it's USB device.
 
-On MacOS we have to call a system specific command (system_profiler). At least it outputs json. We find the serial ports by comparing vid, pid and serial number or location_id with the information from pyserial.
+On MacOS we have to call a system specific command (system_profiler). At least it outputs json. We find the serial ports by comparing vid, pid and serial number or location_id with the information from pyserial. Virtual drives that don't appear by name in  SPSUSBDataType are found through psutil.disk_partitions() and their bsd_name.
 
 On linux we use pyudev and traverse the USB hierarchy of USB devices, removing the parent ones that can be identified as hubs.
 
@@ -23,9 +23,9 @@ the API:
 import os, glob, json, sys
 import subprocess
 import serial.tools.list_ports
+import psutil
 
 if sys.platform == "linux":
-	import psutil
 	import pyudev
 
 # Vendor IDs recognized as Arduino / Circuitpython boards
@@ -40,18 +40,20 @@ VIDS = [
 mainNames = ["code.txt","code.py","main.py","main.txt"]
 
 if sys.platform == "darwin":
-	# look at the MICROBITS volumes and the SN in DETAILS.TXT
-	def findMicroBits():
-		outListe = {}
-		lbits = glob.glob("/Volumes/MICROBIT*")
-		for bit in lbits:
-			file = bit+"/DETAILS.TXT"
-			with open(file,"r") as fp:
-				l1 = fp.readline()
-				l2 = fp.readline()
-				l2 = l2.split(":")[-1].strip()
-				outListe[l2] = bit
-		return outListe
+	# list the drive info for a circuipython drive (code or main and version)
+	def get_cp_drive_info(mount):
+		mains = []
+		for mainFile in mainNames:
+			if os.path.exists(os.path.join(mount,mainFile)):
+				mains += [mainFile]
+		boot_out = os.path.join(mount, "boot_out.txt")
+		try:
+			with open(boot_out) as boot:
+				circuit_python, _ = boot.read().split(";")
+				version = circuit_python.split(" ")[-3]
+		except (FileNotFoundError,ValueError,IndexError):
+			version = ""
+		return (mains,version)
 
 	def getDeviceList():
 		global remainingPorts
@@ -59,11 +61,13 @@ if sys.platform == "darwin":
 		ses = subprocess.check_output(["system_profiler","-json","SPUSBDataType"], stderr=subprocess.DEVNULL)
 		system_profile = json.loads(ses)
 		
-		# list the micro:bit virtual drives (that are somehow not in system_profiler)
-		bitsList = findMicroBits()
-
 		# list the existing ports
 		remainingPorts = list(filter(lambda x: x.vid != None, serial.tools.list_ports.comports()))
+		
+		# list the mounts to match the mount points
+		allMounts = {}
+		for part in psutil.disk_partitions():
+			allMounts[part.device] = part.mountpoint
 	
 		# going recursively through all the devices
 		# extracting the important informations
@@ -133,13 +137,6 @@ if sys.platform == "darwin":
 				curDevice['name'] = subGroup['_name']
 				# identify and add the micro:bit volumes
 				deviceVolumes = []
-				if curDevice['name'].find("micro:bit"):
-					if serial_num in bitsList:
-						bitvolume = {
-							'mount_point': bitsList[serial_num],
-							'mains': [],
-						}
-						deviceVolumes.append(bitvolume)
 				# list the volume(s) and the circtuipython run files
 				version = ""
 				if 'Media' in subGroup:
@@ -149,22 +146,20 @@ if sys.platform == "darwin":
 							for volume in media['volumes']:
 								if 'mount_point' in volume:
 									mount = volume['mount_point']
-									if mount != "":
-										mains = []
-										for mainFile in mainNames:
-											if os.path.exists(os.path.join(mount,mainFile)):
-												mains += [mainFile]
-										deviceVolumes.append({
-											'mount_point': mount,
-											'mains': mains,
-										})
-									boot_out = os.path.join(mount, "boot_out.txt")
-									try:
-										with open(boot_out) as boot:
-											circuit_python, _ = boot.read().split(";")
-											version = circuit_python.split(" ")[-3]
-									except (FileNotFoundError,ValueError,IndexError):
-										pass
+									mains,version = get_cp_drive_info(mount)
+									deviceVolumes.append({
+										'mount_point': mount,
+										'mains': mains,
+									})
+						if 'bsd_name' in media:
+							disk = os.path.join("/dev",media['bsd_name'])
+							if disk in allMounts:
+								mount = allMounts[disk]
+								mains,version = get_cp_drive_info(mount)
+								deviceVolumes.append({
+									'mount_point': mount,
+									'mains': mains,
+								})
 				curDevice['volumes'] = deviceVolumes
 				curDevice['version'] = version
 				devices += [curDevice]
@@ -179,9 +174,9 @@ elif sys.platform == "linux":
 
 	def getDeviceList():
 		# get drives by mountpoint
-		mounts = {}
+		allMounts = {}
 		for part in psutil.disk_partitions():
-			mounts[part.device] = part.mountpoint
+			allMounts[part.device] = part.mountpoint
 
 		rp = list(filter(lambda x: x.vid != None, serial.tools.list_ports.comports()))
 		remainingPorts = [port.device for port in rp]
@@ -210,8 +205,8 @@ elif sys.platform == "linux":
 				if child.device_type == 'partition':
 					volumeName = child.get('ID_FS_LABEL', '')
 					node = child.get('DEVNAME','')
-					if node in mounts:
-						volume = mounts[node]
+					if node in allMounts:
+						volume = allMounts[node]
 						mains = []
 						for mainFile in mainNames:
 							if os.path.exists(os.path.join(volume,mainFile)):
