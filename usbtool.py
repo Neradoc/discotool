@@ -6,19 +6,38 @@ import usbinfos
 
 # my usual color print copy and pasted stuff
 # (for the mac terminal)
-RED    = '\033[91m'
-GREEN  = '\033[92m'
-YELLOW = '\033[93m'
-BLUE   = '\033[94m'
-PURPLE = '\033[95m'
-CYAN   = '\033[96m'
-GREY   = '\033[2;40;39m'
-ENDC   = '\033[0m'
-BOLD   = '\033[1m'
-UNDERLINE  = '\033[4m'
-FONDGRIS   = '\033[47m'
-NOIRSURGRIS= '\033[7;40;39m'
-BLUEONWHITE= '\033[7;44;39m'
+class TCMacOS: # terminal colors
+	RED    = '\033[91m'
+	GREEN  = '\033[92m'
+	YELLOW = '\033[93m'
+	BLUE   = '\033[94m'
+	PURPLE = '\033[95m'
+	CYAN   = '\033[96m'
+	GREY   = '\033[2;40;39m'
+	ENDC   = '\033[0m'
+	BOLD   = '\033[1m'
+	UNDERLINE  = '\033[4m'
+	FONDGRIS   = '\033[47m'
+	NOIRSURGRIS= '\033[7;40;39m'
+	BLUEONWHITE= '\033[7;44;39m'
+
+class TCNone: # terminal colors
+	RED    = ''
+	GREEN  = ''
+	YELLOW = ''
+	BLUE   = ''
+	PURPLE = ''
+	CYAN   = ''
+	GREY   = ''
+	ENDC   = ''
+	BOLD   = ''
+	UNDERLINE  = ''
+	FONDGRIS   = ''
+	NOIRSURGRIS= ''
+	BLUEONWHITE= ''
+
+# switch on sys.platform
+TC = TCMacOS()
 
 # command line to connect to the REPL (screen, tio)
 SCREEN_COMMAND = ["screen"]
@@ -36,7 +55,7 @@ def displayTheBoardsList(bList, ports=[]):
 	outText = ""
 	for dev in bList:
 		# display the device name
-		outText += (YELLOW+BOLD+"- "+dev['name']+" "+"-" * (70 - len(dev['name']))+ENDC+"\n")
+		outText += (TC.YELLOW+TC.BOLD+"- "+dev['name']+" "+"-" * (70 - len(dev['name']))+TC.ENDC+"\n")
 		# display tha manufacturer and serial number
 		if dev['manufacturer'] != "":
 			outText += ("\t"+dev['manufacturer'])
@@ -46,10 +65,10 @@ def displayTheBoardsList(bList, ports=[]):
 				outText += ("\n")
 		else:
 			outText += ("\t[SN:"+dev['serial_num']+"]\n")
-		# print the serial ports
+		# serial ports
 		for path in dev['ports']:
 			outText += ("\t"+path+"\n")
-		# print the volumes and main files
+		# volumes and main files
 		for volume in dev['volumes']:
 			if 'mount_point' in volume:
 				outText += ("\t"+volume['mount_point'])
@@ -59,9 +78,9 @@ def displayTheBoardsList(bList, ports=[]):
 					outText += " v"+dev['version']
 				outText += ("\n")
 	click.echo(outText.rstrip())
-	# print remaining tty ports not accounted for
+	# remaining serial ports not accounted for
 	if len(ports) > 0:
-		click.echo(BOLD+"--"+" Unknown Serial Ports "+"-"*50+ENDC)
+		click.echo(TC.BOLD+"--"+" Unknown Serial Ports "+"-"*50+TC.ENDC)
 		click.echo(" ".join(ports))
 
 # interpret the arguments and select devices based on that
@@ -127,8 +146,8 @@ def main(ctx, auto, wait, name, serial, mount):
 	ctx.obj["noCriteria"] = noCriteria
 	# compute the data
 	deviceList, remainingPorts = usbinfos.getDeviceList()
-	# print the reminder
-	click.echo(GREY+"Filters: --name --serial --mount --auto --wait "+ENDC+"\n"+GREY+"Commands: list, repl, eject, backup <to_dir>, circup <options> "+ENDC)
+	# show the reminder
+	click.echo(TC.GREY+"Filters: --name --serial --mount --auto --wait "+TC.ENDC+"\n"+TC.GREY+"Commands: list, repl, eject, backup <to_dir>, circup <options> "+TC.ENDC)
 	#
 	# wait until the device pops up
 	if wait:
@@ -191,9 +210,9 @@ def repl(ctx):
 		port = device['ports'][0]
 		name = device['name']
 		command = SCREEN_COMMAND + [port]
-		click.echo(CYAN+BOLD+"- Connecting to "+name+" "+"-"*(56-len(name))+ENDC)
-		click.echo(BOLD+"> "+ENDC+" ".join(command))
-		click.echo(CYAN+" "+" ↓ "*24+ENDC)
+		click.echo(TC.CYAN+TC.BOLD+"- Connecting to "+name+" "+"-"*(56-len(name))+TC.ENDC)
+		click.echo(TC.BOLD+"> "+TC.ENDC+" ".join(command))
+		click.echo(TC.CYAN+" "+" ↓ "*24+TC.ENDC)
 		subprocess.call(command)
 		click.echo("Fin.")
 
@@ -202,18 +221,18 @@ def repl(ctx):
 @click.pass_context
 def eject(ctx):
 	"""
-	Eject the disk volume(s) from the matching device
+	Eject the disk volume(s) from the matching device (Mac only for now)
 	"""
 	selectedDevices = ctx.obj["selectedDevices"]
 	if len(selectedDevices) == 0:
-		click.echo(PURPLE+"No device selected"+ENDC)
+		click.echo(TC.PURPLE+"No device selected"+TC.ENDC)
 	else:
-		click.echo(PURPLE+BOLD+"- EJECTING DRIVES "+"-"*55+ENDC)
+		click.echo(TC.PURPLE+TC.BOLD+"- EJECTING DRIVES "+"-"*55+TC.ENDC)
 		for device in selectedDevices:
 			for volume in device['volumes']:
 				volumeName = os.path.basename(volume['mount_point'])
 				command = ["osascript", "-e", "tell application \"Finder\" to eject \"{}\"".format(volumeName)]
-				click.echo("Ejection de "+volumeName)
+				click.echo("Ejecting: "+volumeName)
 				subprocess.call(command)
 	
 @main.command()
@@ -221,16 +240,29 @@ def eject(ctx):
 	"backup_dir",
 	type=click.Path(exists=True, file_okay=False),
 )
+@click.option(
+	"--create", "-c",
+	is_flag=True, help="Create the target directory if does not exist."
+)
+@click.option(
+	"--date", "-d",
+	is_flag=True, help="Create a sub directory based on a timestamp."
+)
 @click.argument(
 	"sub_dir",
 	required=False,
 )
 @click.pass_context
-def backup(ctx, backup_dir, sub_dir):
+def backup(ctx, backup_dir, create, date, sub_dir):
 	"""
 	Backup copy of all (Circuipython) drives found into the given directory
 	"""
 	selectedDevices = ctx.obj["selectedDevices"]
+	os.mkdir(backup_dir)
+	if date:
+		timestamp = time.strftime("%Y%m%d-%H%M%S")
+		if sub_dir: sub_dir += timestamp
+		else: sub_dir = timestamp
 	if sub_dir:
 		sub_dir = sub_dir.replace("/","")
 		targetDir = os.path.join(backup_dir, sub_dir)
@@ -239,9 +271,9 @@ def backup(ctx, backup_dir, sub_dir):
 	else:
 		targetDir = backup_dir
 	if len(selectedDevices) == 0:
-		click.echo(PURPLE+"No device selected"+ENDC)
+		click.echo(TC.PURPLE+"No device selected"+TC.ENDC)
 	else:
-		click.echo(GREEN+BOLD+"- BACKING UP "+"-"*60+ENDC)
+		click.echo(TC.GREEN+TC.BOLD+"- BACKING UP "+"-"*60+TC.ENDC)
 		for device in selectedDevices:
 			for volume in device['volumes']:
 				volume_src = volume['mount_point']
@@ -254,7 +286,7 @@ def backup(ctx, backup_dir, sub_dir):
 					click.echo("Backing up "+volume_src+" to\n "+container)
 					shutil.copytree(volume_src, container, dirs_exist_ok = True)
 				else:
-					click.echo(RED+"Not a circtuipython board !"+ENDC)
+					click.echo(TC.RED+"Not a circtuipython board !"+TC.ENDC)
 
 @main.command()
 @click.argument("circup_options", nargs=-1)
@@ -273,8 +305,8 @@ def circup(ctx, circup_options):
 			if os.path.exists(volume_src) and os.path.exists(volume_bootout):
 				command = CIRCUP_COMMAND+["--path", volume_src]
 				command += [x for x in circup_options]
-				click.echo(CYAN+BOLD+"- Running circup on "+name+" "+"-"*(56-len(device['name']))+ENDC)
-				click.echo(BOLD+"> "+ENDC+" ".join(command))
+				click.echo(TC.CYAN+TC.BOLD+"- Running circup on "+name+" "+"-"*(56-len(device['name']))+TC.ENDC)
+				click.echo(TC.BOLD+"> "+TC.ENDC+" ".join(command))
 				subprocess.call(command)
 				break
 
