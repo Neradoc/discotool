@@ -134,9 +134,17 @@ def find_the_devices(deviceList, auto, wait, name, serial, mount):
 	default="",
 	help="Select a device by matching the path to its associated mount.",
 )
+@click.option(
+	"--nocolor",
+	is_flag=True, help="Disable colors on the prompt."
+)
 @click.pass_context
-def main(ctx, auto, wait, name, serial, mount):
+def main(ctx, auto, wait, name, serial, mount, nocolor):
 	ctx.ensure_object(dict)
+	# no colors
+	if nocolor or 'DISCOTOOL_NOCOLOR' in os.environ:
+		global TC
+		TC = TCNone()
 	# normalize the inputs
 	name = name.lower().strip()
 	serial = serial.lower().strip()
