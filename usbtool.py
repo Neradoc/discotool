@@ -266,7 +266,9 @@ def backup(ctx, backup_dir, create, date, sub_dir):
 	Backup copy of all (Circuipython) drives found into the given directory
 	"""
 	selectedDevices = ctx.obj["selectedDevices"]
-	os.mkdir(backup_dir)
+	if create:
+		if not os.path.exists(backup_dir):
+			os.mkdir(backup_dir)
 	if date:
 		timestamp = time.strftime("%Y%m%d-%H%M%S")
 		if sub_dir: sub_dir += timestamp
