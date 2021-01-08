@@ -245,12 +245,16 @@ def backup(ctx, backup_dir, sub_dir):
 		for device in selectedDevices:
 			for volume in device['volumes']:
 				volume_src = volume['mount_point']
-				if os.path.exists(volume_src):
+				volume_bootout = os.path.join(volume_src,"boot_out.txt")
+				# only circup circuitpython boards
+				if os.path.exists(volume_src) and os.path.exists(volume_bootout):
 					container_name = re.sub(r"[^A-Za-z0-9]","_",device['name']).strip("_")
 					container_name += "_SN"+device['serial_num']
 					container = os.path.join(targetDir, container_name)
 					click.echo("Backing up "+volume_src+" to\n "+container)
 					shutil.copytree(volume_src, container, dirs_exist_ok = True)
+				else:
+					click.echo(RED+"Not a circtuipython board !"+ENDC)
 
 @main.command()
 @click.argument("circup_options", nargs=-1)
@@ -264,7 +268,9 @@ def circup(ctx, circup_options):
 		name = device['name']
 		for volume in device['volumes']:
 			volume_src = volume['mount_point']
-			if os.path.exists(volume_src):
+			volume_bootout = os.path.join(volume_src,"boot_out.txt")
+			# only circup circuitpython boards
+			if os.path.exists(volume_src) and os.path.exists(volume_bootout):
 				command = CIRCUP_COMMAND+["--path", volume_src]
 				command += [x for x in circup_options]
 				click.echo(CYAN+BOLD+"- Running circup on "+name+" "+"-"*(56-len(device['name']))+ENDC)
