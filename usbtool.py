@@ -52,32 +52,33 @@ except:
 
 # print the text from main
 def displayTheBoardsList(bList, ports=[]):
-	outText = ""
+	if len(bList) == 0 and len(ports) == 0:
+		click.echo(TC.PURPLE+"No device found."+TC.ENDC)
+		return
 	for dev in bList:
 		# display the device name
-		outText += (TC.YELLOW+TC.BOLD+"- "+dev['name']+" "+"-" * (70 - len(dev['name']))+TC.ENDC+"\n")
+		click.echo(TC.YELLOW+TC.BOLD+"- "+dev['name']+" "+"-" * (70 - len(dev['name']))+TC.ENDC)
 		# display tha manufacturer and serial number
 		if dev['manufacturer'] != "":
-			outText += ("\t"+dev['manufacturer'])
+			click.echo("\t"+dev['manufacturer'],nl=False)
 			if dev['serial_num'] != "":
-				outText += (" [SN:"+dev['serial_num']+"]\n")
+				click.echo(" [SN:"+dev['serial_num']+"]")
 			else:
-				outText += ("\n")
+				click.echo()
 		else:
-			outText += ("\t[SN:"+dev['serial_num']+"]\n")
+			click.echo("\t[SN:"+dev['serial_num']+"]")
 		# serial ports
 		for path in dev['ports']:
-			outText += ("\t"+path+"\n")
+			click.echo("\t"+path)
 		# volumes and main files
 		for volume in dev['volumes']:
 			if 'mount_point' in volume:
-				outText += ("\t"+volume['mount_point'])
+				click.echo("\t"+volume['mount_point'],nl=False)
 				for main in volume['mains']:
-					outText += (" ("+main+")")
+					click.echo(" ("+main+")",nl=False)
 				if dev['version']:
-					outText += " v"+dev['version']
-				outText += ("\n")
-	click.echo(outText.rstrip())
+					click.echo(" v"+dev['version'],nl=False)
+				click.echo("")
 	# remaining serial ports not accounted for
 	if len(ports) > 0:
 		click.echo(TC.BOLD+"--"+" Unknown Serial Ports "+"-"*50+TC.ENDC)
@@ -136,7 +137,7 @@ def find_the_devices(deviceList, auto, wait, name, serial, mount):
 )
 @click.option(
 	"--nocolor",
-	is_flag=True, help="Disable colors on the prompt."
+	is_flag=True, help="Disable colors in the terminal."
 )
 @click.pass_context
 def main(ctx, auto, wait, name, serial, mount, nocolor):
@@ -229,11 +230,11 @@ def repl(ctx):
 @click.pass_context
 def eject(ctx):
 	"""
-	Eject the disk volume(s) from the matching device (Mac only for now)
+	Eject the disk volume(s) from the matching device (Mac only now)
 	"""
 	selectedDevices = ctx.obj["selectedDevices"]
 	if len(selectedDevices) == 0:
-		click.echo(TC.PURPLE+"No device selected"+TC.ENDC)
+		click.echo(TC.PURPLE+"No device selected."+TC.ENDC)
 	else:
 		click.echo(TC.PURPLE+TC.BOLD+"- EJECTING DRIVES "+"-"*55+TC.ENDC)
 		for device in selectedDevices:
@@ -246,7 +247,8 @@ def eject(ctx):
 @main.command()
 @click.argument(
 	"backup_dir",
-	type=click.Path(exists=True, file_okay=False),
+	required=True,
+	#type=click.Path(exists=True, file_okay=False),
 )
 @click.option(
 	"--create", "-c",
@@ -263,12 +265,15 @@ def eject(ctx):
 @click.pass_context
 def backup(ctx, backup_dir, create, date, sub_dir):
 	"""
-	Backup copy of all (Circuipython) drives found into the given directory
+	Backup copy of all (Circuipython) drives found.
 	"""
 	selectedDevices = ctx.obj["selectedDevices"]
 	if create:
 		if not os.path.exists(backup_dir):
 			os.mkdir(backup_dir)
+	if not os.path.exists(backup_dir):
+		click.echo(TC.RED+"The target backup directory path does not exist."+ENDC)
+		return
 	if date:
 		timestamp = time.strftime("%Y%m%d-%H%M%S")
 		if sub_dir: sub_dir += timestamp
