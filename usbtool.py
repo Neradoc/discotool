@@ -202,7 +202,7 @@ def main(ctx, auto, wait, name, serial, mount, nocolor):
 @click.pass_context
 def list(ctx):
 	"""
-	List all the boards that have been detected
+	List all the devices that have been detected
 	"""
 	deviceList = ctx.obj["deviceList"]
 	remainingPorts = ctx.obj["remainingPorts"]
@@ -212,7 +212,7 @@ def list(ctx):
 @click.pass_context
 def repl(ctx):
 	"""
-	Connect to the REPL of the selected board
+	Connect to the REPL of the selected device
 	"""
 	selectedDevices = ctx.obj["selectedDevices"]
 	for device in selectedDevices:
@@ -308,7 +308,7 @@ def backup(ctx, backup_dir, create, date, sub_dir):
 @click.pass_context
 def circup(ctx, circup_options):
 	"""
-	Call circup on the selected board with the given options
+	Call circup on the selected device with the given options
 	"""
 	selectedDevices = ctx.obj["selectedDevices"]
 	for device in selectedDevices:
