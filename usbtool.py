@@ -95,20 +95,23 @@ def find_the_devices(deviceList, auto, wait, name, serial, mount):
 		for device in deviceList:
 			device_name = device['name'].lower()
 			if device_name.find(name) >= 0:
-				selectedDevices.append(device)
+				if device not in selectedDevices:
+					selectedDevices.append(device)
 	# device selected by its serial number (first one found that matches)
 	if serial != "":
 		for device in deviceList:
 			serial_number = device['serial_num'].lower()
 			if serial_number.find(serial) >= 0:
-				selectedDevices.append(device)
+				if device not in selectedDevices:
+					selectedDevices.append(device)
 	# device selected by its drive path (first one that matches)
 	if mount != "":
 		for device in deviceList:
 			for volume in device['volumes']:
 				if 'mount_point' in volume \
 					and volume['mount_point'].lower().find(mount) >= 0:
-					selectedDevices.append(device)
+					if device not in selectedDevices:
+						selectedDevices.append(device)
 	return selectedDevices
 
 @click.group(invoke_without_command=True)
