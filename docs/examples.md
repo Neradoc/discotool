@@ -113,19 +113,19 @@ Huzzah 32
 	Adafruit Industries [SN:00000000001C]
 ```
 ##### FeatherS2
-**ROM bootloader**  
+- **ROM bootloader**  
 ```
 - ESP32-S2 --------------------------------------------------------------
 	Espressif [SN:0]
 	/dev/cu.usbmodem01
 ```
-**UF2 bootloader (no serial)**  
+- **UF2 bootloader (no serial)**  
 ```
 - FeatherS2 -------------------------------------------------------------
 	Unexpected Maker [SN:7CDFA103B7B4]
 	/Volumes/UFTHRS2BOOT
 ```  
-**Circuitpython running (drive renamed)**  
+- **Circuitpython running (drive renamed)**  
 ```
 - FeatherS2 -------------------------------------------------------------
 	UnexpectedMaker [SN:7CDFA103B674]
