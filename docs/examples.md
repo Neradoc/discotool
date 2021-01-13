@@ -1,4 +1,5 @@
-##### A few boards running whatever (I almost always rename my CIRCUITPY drive).
+#### A few boards running whatever (on macOS).
+(I almost always rename my CIRCUITPY drive)
 ```
 - Feather STM32F405 Express ---------------------------------------------
 	Adafruit Industries LLC [SN:C100730090052524E4039302]
