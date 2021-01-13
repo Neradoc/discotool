@@ -16,6 +16,10 @@ Exposes the getDeviceList() function. Find boards on the host's USB bus and trie
 }]
 ```
 
+## Operating system
+It currently runs on macOS™ (Catalina) using a system tool, and on linux using udev.  
+Python modules required: `python3 -m pip install pyserial psutil click` and `pyudev` on linux.
+
 ## Tool use
 
 Create a config.py file to override default commands.
