@@ -1,7 +1,8 @@
-USB Infos / Disco Tool
-
+## USB Infos / Disco Tool
 Module and tool to discover all boards connected to USB.
-Usbinfo module: exposes the getDeviceList() function. Find boards on the host's USB bus and tries to match them with serial ports and mounted drives, virtual or not. When a drive is found, it lists circuitpython information if available: CPY version number and main files (code.py, etc.). Returns the list of boards found with their information, and a list of unmatched serial ports.
+
+### Usbinfo module
+Exposes the getDeviceList() function. Find boards on the host's USB bus and tries to match them with serial ports and mounted drives, virtual or not. When a drive is found, it lists circuitpython information if available: CPY version number and main files (code.py, etc.). Returns the list of boards found with their information, and a list of unmatched serial ports.
 ``` python
 [{
 	'manufacturer': 'Adafruit Industries LLC',
@@ -15,7 +16,13 @@ Usbinfo module: exposes the getDeviceList() function. Find boards on the host's 
 }]
 ```
 
-### Tool use
+## Tool use
+
+Create a config.py file to override default commands.
+- `SCREEN_COMMAND = ["screen"]` command to connect to the REPL (screen, tio)
+- `CIRCUP_COMMAND = ["circup"]` command to call circup
+
+### Command line options
 
 - --wait: runs the scan every second until it detects a board.
 - --nocolor: do not output colors in the terminal.
@@ -44,13 +51,14 @@ Usbinfo module: exposes the getDeviceList() function. Find boards on the host's 
 
 #### Examples:
 
-discotool
+`discotool`
 ![discotool list](docs/list_clue_qt_s2.png)
 
-discotool -n clue
+`discotool -n clue`  
+(using `tio`)
 ![discotool repl](docs/repl_to_clue.png)
 
-discotool -n clue circup update
+`discotool -n clue circup update`
 ![discotool circup](docs/circup_to_clue.png)
 
 [Samples of what output you can expect from some boards.](docs/examples.md)
