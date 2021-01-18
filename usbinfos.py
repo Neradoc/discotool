@@ -40,6 +40,11 @@ VIDS = [
 mainNames = ["code.txt","code.py","main.py","main.txt"]
 
 if sys.platform == "darwin":
+	# where to find serial ports named by location on macOS
+	# NOTE: we don't check for /dev/tty.usbmodem<serial_num>
+	#       because devices with serial numbers are found differently
+	SERIAL_PREFIXES = ["/dev/cu.usbmodem","/dev/cu.usbserial-"]
+
 	# list the drive info for a circuipython drive (code or main and version)
 	def get_cp_drive_info(mount):
 		mains = []
@@ -119,12 +124,11 @@ if sys.platform == "darwin":
 						remainingPorts[x] = None
 					# no SN, use location ID with standard mac paths
 					elif serial_num == "":
-						import pprint
 						location = subGroup['location_id'][2:].split()[0]
-						locationStr = "/dev/cu.usbmodem"+location
-						if port.device.startswith(locationStr):
-							ttys.append(port.device)
-							remainingPorts[x] = None
+						for locationStr in SERIAL_PREFIXES:
+							if port.device.startswith(locationStr+location):
+								ttys.append(port.device)
+								remainingPorts[x] = None
 				remainingPorts = list(filter(lambda x:  x is not None, remainingPorts))
 				curDevice['ports'] = ttys
 				#
