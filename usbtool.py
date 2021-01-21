@@ -219,8 +219,11 @@ def repl(ctx):
 	"""
 	selectedDevices = ctx.obj["selectedDevices"]
 	for device in selectedDevices:
-		port = device['ports'][0]
 		name = device['name']
+		if len(device['ports']) == 0:
+			click.echo(TC.RED+f"No serial port found ({name})"+TC.ENDC)
+			continue
+		port = device['ports'][0]
 		command = SCREEN_COMMAND + [port]
 		click.echo(TC.CYAN+TC.BOLD+"- Connecting to "+name+" "+"-"*(56-len(name))+TC.ENDC)
 		click.echo(TC.BOLD+"> "+TC.ENDC+" ".join(command))
@@ -304,7 +307,7 @@ def backup(ctx, backup_dir, create, date, sub_dir):
 					click.echo("Backing up "+volume_src+" to\n "+container)
 					shutil.copytree(volume_src, container, dirs_exist_ok = True)
 				else:
-					click.echo(TC.RED+"Not a circtuipython board !"+TC.ENDC)
+					click.echo(TC.RED+"Not a circuitpython board !"+TC.ENDC)
 
 @main.command()
 @click.argument("circup_options", nargs=-1)
