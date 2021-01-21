@@ -2,6 +2,7 @@
 
 import os, time, sys, re
 import subprocess, shutil, click
+from json import dumps
 import usbinfos
 
 # my usual color print copy and pasted stuff
@@ -49,6 +50,10 @@ try:
 	from config import *
 except:
 	pass
+
+# print the reminder
+def showReminder():
+	click.echo(TC.GREY+"Filters: --name --serial --mount --auto --wait "+TC.ENDC+"\n"+TC.GREY+"Commands: list, repl, eject, backup <to_dir>, circup <options> "+TC.ENDC)
 
 # print the text from main
 def displayTheBoardsList(bList, ports=[]):
@@ -158,8 +163,6 @@ def main(ctx, auto, wait, name, serial, mount, nocolor):
 	ctx.obj["noCriteria"] = noCriteria
 	# compute the data
 	deviceList, remainingPorts = usbinfos.getDeviceList()
-	# show the reminder
-	click.echo(TC.GREY+"Filters: --name --serial --mount --auto --wait "+TC.ENDC+"\n"+TC.GREY+"Commands: list, repl, eject, backup <to_dir>, circup <options> "+TC.ENDC)
 	#
 	# wait until the device pops up
 	if wait:
@@ -205,8 +208,9 @@ def main(ctx, auto, wait, name, serial, mount, nocolor):
 @click.pass_context
 def list(ctx):
 	"""
-	List all the devices that have been detected
+	List all the devices that have been detected.
 	"""
+	showReminder()
 	deviceList = ctx.obj["deviceList"]
 	remainingPorts = ctx.obj["remainingPorts"]
 	displayTheBoardsList(deviceList, remainingPorts)
@@ -215,8 +219,9 @@ def list(ctx):
 @click.pass_context
 def repl(ctx):
 	"""
-	Connect to the REPL of the selected device
+	Connect to the REPL of the selected device.
 	"""
+	showReminder()
 	selectedDevices = ctx.obj["selectedDevices"]
 	for device in selectedDevices:
 		name = device['name']
@@ -236,7 +241,7 @@ def repl(ctx):
 @click.pass_context
 def eject(ctx):
 	"""
-	Eject the disk volume(s) from the matching device (Mac only now)
+	Eject the disk volume(s) from the matching device (Mac only now).
 	"""
 	selectedDevices = ctx.obj["selectedDevices"]
 	if len(selectedDevices) == 0:
@@ -249,7 +254,7 @@ def eject(ctx):
 				command = ["osascript", "-e", "tell application \"Finder\" to eject \"{}\"".format(volumeName)]
 				click.echo("Ejecting: "+volumeName)
 				subprocess.call(command)
-	
+
 @main.command()
 @click.argument(
 	"backup_dir",
@@ -314,7 +319,7 @@ def backup(ctx, backup_dir, create, date, sub_dir):
 @click.pass_context
 def circup(ctx, circup_options):
 	"""
-	Call circup on the selected device with the given options
+	Call circup on the selected device with the given options.
 	"""
 	selectedDevices = ctx.obj["selectedDevices"]
 	for device in selectedDevices:
@@ -336,9 +341,63 @@ def circup(ctx, circup_options):
 @click.pass_context
 def cu(ctx, circup_options):
 	"""
-	Alias to circup
+	Alias to circup.
 	"""
 	ctx.invoke(circup, circup_options=circup_options)
+
+@main.command()
+@click.argument("key", required=True)
+@click.pass_context
+def get(ctx, key):
+	"""
+	Get value for the key sparated by a new line for each device.
+	A few special keys give direct access to values:
+	'volume' and 'port' select the first valid mounted drive or serial port.
+	'main' or 'code.py' gives the path to the main Circuitpython file.
+	'vid' and 'pid' are shortcuts for vendor_id and product_id.
+	'sn' is a shortcut for serial_num.
+	
+	Example: screen `discotool -n clue get port`
+	"""
+	selectedDevices = ctx.obj["selectedDevices"]
+	values = []
+	for device in selectedDevices:
+		if key in device:
+			if type(device[key]) == str:
+				values.append(device[key])
+			else:
+				values.append(dumps(device[key]))
+		elif key == "volume":
+			if 'volumes' in device:
+				if len(device['volumes']) > 0:
+					values.append(device['volumes'][0]['mount_point'])
+		elif key == "port":
+			if 'ports' in device:
+				if len(device['ports']) > 0:
+					values.append(device['ports'][0])
+		elif key == "vid":
+			values.append(device['vendor_id'])
+		elif key == "pid":
+			values.append(device['product_id'])
+		elif key == "sn":
+			values.append(device['serial_num'])
+		elif key == "main" or key == "code.py":
+			if 'volumes' in device:
+				if len(device['volumes']) > 0:
+					if 'mains' in device['volumes'][0]:
+						if len(device['volumes'][0]['mains']) > 0:
+							path = os.path.join(device['volumes'][0]['mount_point'], device['volumes'][0]['mains'][0])
+							values.append(path)
+	click.echo("\n".join([str(x) for x in values]))
+
+@main.command()
+@click.pass_context
+def json(ctx):
+	"""
+	Get the values as a json string.
+	"""
+	selectedDevices = ctx.obj["selectedDevices"]
+	click.echo(dumps(selectedDevices))
 
 # Allows execution via `python -m circup ...`
 if __name__ == "__main__":
