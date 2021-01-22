@@ -1,14 +1,14 @@
 ## USB Infos / Disco Tool
 Module and tool to discover all boards connected to USB.
 
-### Usbinfo module
+### `usbinfo.py` module
 Exposes the getDeviceList() function. Find boards on the host's USB bus and tries to match them with serial ports and mounted drives, virtual or not. When a drive is found, it lists circuitpython information if available: CPY version number and main files (code.py, etc.). Returns the list of boards found with their information, and a list of unmatched serial ports.
 ```python
 [{
 	'manufacturer': 'Adafruit Industries LLC',
 	'name': 'CLUE nRF52840 Express',
 	'ports': ['/dev/cu.usbmodem144443111'],
-	'product_id': 32882,-
+	'product_id': 32882,
 	'serial_num': 'F88EE0399C0E1FC6',
 	'vendor_id': 9114,
 	'version': '6.0.1',
@@ -20,7 +20,7 @@ Exposes the getDeviceList() function. Find boards on the host's USB bus and trie
 It currently runs on macOS™ (Catalina) using a system tool, and on linux using udev.  
 Python modules required: `python3 -m pip install pyserial psutil click` and `pyudev` on linux.
 
-## Tool use
+## `usbtool.py` use
 
 Create a config.py file to override default commands.
 - `SCREEN_COMMAND = ["screen"]` command to connect to the REPL (tio, picocom, etc.)
@@ -59,11 +59,6 @@ Create a config.py file to override default commands.
 	- **`main`** or **`code.py`**: full path to the main file for circuitpython.
 
 #### Examples:
-
-```bash
-nano `discotool -n clue get main`
-
-```
 
 `discotool`
 ![discotool list](docs/list_clue_qt_s2.png)
