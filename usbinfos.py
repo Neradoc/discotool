@@ -139,9 +139,8 @@ if sys.platform == "darwin":
 					continue
 				# name needs no underscore
 				curDevice['name'] = subGroup['_name']
-				# identify and add the micro:bit volumes
-				deviceVolumes = []
 				# list the volume(s) and the circtuipython run files
+				deviceVolumes = []
 				version = ""
 				if 'Media' in subGroup:
 					for media in subGroup['Media']:
