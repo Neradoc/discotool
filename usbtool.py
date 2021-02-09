@@ -5,45 +5,12 @@ import subprocess, shutil, click
 from json import dumps
 import usbinfos
 
-# my usual color print copy and pasted stuff
-# (for the mac terminal)
-class TCMacOS: # terminal colors
-	RED    = '\033[91m'
-	GREEN  = '\033[92m'
-	YELLOW = '\033[93m'
-	BLUE   = '\033[94m'
-	PURPLE = '\033[95m'
-	CYAN   = '\033[96m'
-	GREY   = '\033[2;40;39m'
-	ENDC   = '\033[0m'
-	BOLD   = '\033[1m'
-	UNDERLINE  = '\033[4m'
-	FONDGRIS   = '\033[47m'
-	NOIRSURGRIS= '\033[7;40;39m'
-	BLUEONWHITE= '\033[7;44;39m'
-
-class TCNone: # terminal colors
-	RED    = ''
-	GREEN  = ''
-	YELLOW = ''
-	BLUE   = ''
-	PURPLE = ''
-	CYAN   = ''
-	GREY   = ''
-	ENDC   = ''
-	BOLD   = ''
-	UNDERLINE  = ''
-	FONDGRIS   = ''
-	NOIRSURGRIS= ''
-	BLUEONWHITE= ''
-
-# switch on sys.platform
-TC = TCMacOS()
-
 # command line to connect to the REPL (screen, tio)
 SCREEN_COMMAND = ["screen"]
 # command line to call circup
 CIRCUP_COMMAND = ["circup"]
+# disable colors
+DISCOTOOL_NOCOLOR = False
 
 # override configuration constants with config.py
 try:
@@ -51,18 +18,25 @@ try:
 except:
 	pass
 
+# click.echo/secho
+def echo(text,nl=True,**args):
+	if DISCOTOOL_NOCOLOR:
+		click.echo(text, nl=nl)
+	else:
+		click.secho(text, nl=nl, **args)
+
 # print the reminder
 def showReminder():
-	click.echo(TC.GREY+"Filters: --name --serial --mount --auto --wait "+TC.ENDC+"\n"+TC.GREY+"Commands: list, repl, eject, backup <to_dir>, circup <options> "+TC.ENDC)
+	echo("Filters: --name --serial --mount --auto --wait \nCommands: list, repl, eject, backup <to_dir>, circup <options> ",fg="white",dim="true")
 
 # print the text from main
 def displayTheBoardsList(bList, ports=[]):
 	if len(bList) == 0 and len(ports) == 0:
-		click.echo(TC.PURPLE+"No device found."+TC.ENDC)
+		echo("No device found.",fg="magenta")
 		return
 	for dev in bList:
 		# display the device name
-		click.echo(TC.YELLOW+TC.BOLD+"- "+dev['name']+" "+"-" * (70 - len(dev['name']))+TC.ENDC)
+		echo("- "+dev['name']+" "+"-" * (70 - len(dev['name'])), fg="yellow", bold=True)
 		# display tha manufacturer and serial number
 		if dev['manufacturer'] != "":
 			click.echo("\t"+dev['manufacturer'],nl=False)
@@ -86,7 +60,7 @@ def displayTheBoardsList(bList, ports=[]):
 				click.echo("")
 	# remaining serial ports not accounted for
 	if len(ports) > 0:
-		click.echo(TC.BOLD+"--"+" Unknown Serial Ports "+"-"*50+TC.ENDC)
+		echo("--"+" Unknown Serial Ports "+"-"*50, bold=True)
 		click.echo(" ".join(ports))
 
 # interpret the arguments and select devices based on that
@@ -152,8 +126,8 @@ def main(ctx, auto, wait, name, serial, mount, nocolor):
 	ctx.ensure_object(dict)
 	# no colors
 	if nocolor or 'DISCOTOOL_NOCOLOR' in os.environ:
-		global TC
-		TC = TCNone()
+		global DISCOTOOL_NOCOLOR
+		DISCOTOOL_NOCOLOR = True
 	# normalize the inputs
 	name = name.lower().strip()
 	serial = serial.lower().strip()
@@ -226,13 +200,14 @@ def repl(ctx):
 	for device in selectedDevices:
 		name = device['name']
 		if len(device['ports']) == 0:
-			click.echo(TC.RED+f"No serial port found ({name})"+TC.ENDC)
+			echo(f"No serial port found ({name})", fg="red")
 			continue
 		port = device['ports'][0]
 		command = SCREEN_COMMAND + [port]
-		click.echo(TC.CYAN+TC.BOLD+"- Connecting to "+name+" "+"-"*(56-len(name))+TC.ENDC)
-		click.echo(TC.BOLD+"> "+TC.ENDC+" ".join(command))
-		click.echo(TC.CYAN+" "+" ↓ "*24+TC.ENDC)
+		echo("- Connecting to "+name+" "+"-"*(56-len(name)), fg="cyan", bold=True)
+		echo("> ", bold=True, nl=False)
+		click.echo(" ".join(command))
+		echo(" "+" ↓ "*24, fg="cyan")
 		subprocess.call(command)
 		click.echo("Fin.")
 
@@ -245,9 +220,9 @@ def eject(ctx):
 	"""
 	selectedDevices = ctx.obj["selectedDevices"]
 	if len(selectedDevices) == 0:
-		click.echo(TC.PURPLE+"No device selected."+TC.ENDC)
+		echo("No device selected.", fg="magenta")
 	else:
-		click.echo(TC.PURPLE+TC.BOLD+"- EJECTING DRIVES "+"-"*55+TC.ENDC)
+		echo("- EJECTING DRIVES "+"-"*55, fg="magenta", bold=True)
 		for device in selectedDevices:
 			for volume in device['volumes']:
 				volumeName = os.path.basename(volume['mount_point'])
@@ -283,7 +258,7 @@ def backup(ctx, backup_dir, create, date, sub_dir):
 		if not os.path.exists(backup_dir):
 			os.mkdir(backup_dir)
 	if not os.path.exists(backup_dir):
-		click.echo(TC.RED+"The target backup directory path does not exist."+ENDC)
+		echo("The target backup directory path does not exist.", fg="red")
 		return
 	if date:
 		timestamp = time.strftime("%Y%m%d-%H%M%S")
@@ -297,9 +272,9 @@ def backup(ctx, backup_dir, create, date, sub_dir):
 	else:
 		targetDir = backup_dir
 	if len(selectedDevices) == 0:
-		click.echo(TC.PURPLE+"No device selected"+TC.ENDC)
+		echo("No device selected", fg="magenta")
 	else:
-		click.echo(TC.GREEN+TC.BOLD+"- BACKING UP "+"-"*60+TC.ENDC)
+		echo("- BACKING UP "+"-"*60, fg="green", bold=True)
 		for device in selectedDevices:
 			for volume in device['volumes']:
 				volume_src = volume['mount_point']
@@ -312,7 +287,7 @@ def backup(ctx, backup_dir, create, date, sub_dir):
 					click.echo("Backing up "+volume_src+" to\n "+container)
 					shutil.copytree(volume_src, container, dirs_exist_ok = True)
 				else:
-					click.echo(TC.RED+"Not a circuitpython board !"+TC.ENDC)
+					echo("Not a circuitpython board !", fg="red")
 
 @main.command()
 @click.argument("circup_options", nargs=-1)
@@ -331,8 +306,9 @@ def circup(ctx, circup_options):
 			if os.path.exists(volume_src) and os.path.exists(volume_bootout):
 				command = CIRCUP_COMMAND+["--path", volume_src]
 				command += [x for x in circup_options]
-				click.echo(TC.CYAN+TC.BOLD+"- Running circup on "+name+" "+"-"*(56-len(device['name']))+TC.ENDC)
-				click.echo(TC.BOLD+"> "+TC.ENDC+" ".join(command))
+				echo("- Running circup on "+name+" "+"-"*(56-len(device['name'])), fg="cyan", bold=True)
+				echo("> ", bold=True, nl=False)
+				click.echo(" ".join(command))
 				subprocess.call(command)
 				break
 
