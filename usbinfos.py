@@ -20,7 +20,7 @@ the API:
 - getDeviceList() returns the list of boards
 """
 
-import os, glob, json, sys
+import os, json, sys
 import subprocess
 import serial.tools.list_ports
 import psutil
@@ -36,7 +36,7 @@ VIDS = [
 	0x0d28, # micro:bit
 	0x2341, # Arduino
 	0x1209, # https://pid.codes/
-	0x303a, # Espressif https://github.com/espressif/usb-pids 
+	0x303a, # Espressif https://github.com/espressif/usb-pids
 ]
 
 mainNames = ["code.txt","code.py","main.py","main.txt"]
@@ -62,6 +62,100 @@ if sys.platform == "darwin":
 			version = ""
 		return (mains,version)
 
+	# going recursively through all the devices
+	# extracting the important informations
+	# skipping the media infos and listing the volumes
+	def readSysProfile(profile,devices,allMounts):
+		global remainingPorts
+		for subGroup in profile:
+			# go depth first
+			if "_items" in subGroup:
+				devices = readSysProfile(subGroup['_items'],devices,allMounts)
+			subGroup['_items'] = None
+			# back to the device
+			curDevice = {}
+			# vid is required
+			if 'vendor_id' not in subGroup:
+				continue
+			try:
+				vid = int(subGroup['vendor_id'].split(" ")[0],16)
+			except:
+				vid = 0
+				continue
+			curDevice['vendor_id'] = vid
+			# product id
+			try:
+				pid = int(subGroup['product_id'].strip().split(" ")[0],16)
+			except:
+				pid = 0
+			curDevice['product_id'] = pid
+			# serial number is not always present
+			if 'serial_num' in subGroup:
+				serial_num = subGroup['serial_num']
+			else:
+				serial_num = ""
+			curDevice['serial_num'] = serial_num
+			# manufacturer is kind of a mess sometimes
+			if 'manufacturer' in subGroup:
+				manufacturer = subGroup['manufacturer']
+			else:
+				manufacturer = ""
+			curDevice['manufacturer'] = manufacturer
+			# try to guess the port using the Location ID or Serial Number
+			ttys = []
+			for num_port,port in enumerate(remainingPorts):
+				port = remainingPorts[num_port]
+				# has SN, match it with the serial ports
+				if port.vid == vid and port.pid == pid \
+					and serial_num != "" and port.serial_number == serial_num:
+					ttys.append(port.device)
+					remainingPorts[num_port] = None
+				# no SN, use location ID with standard mac paths
+				elif serial_num == "":
+					location = subGroup['location_id'][2:].split()[0]
+					for locationStr in SERIAL_PREFIXES:
+						if port.device.startswith(locationStr+location):
+							ttys.append(port.device)
+							remainingPorts[num_port] = None
+			remainingPorts = list(filter(lambda x:  x is not None, remainingPorts))
+			curDevice['ports'] = ttys
+			#
+			# now we select all the ones with a known VID or with an existing tty
+			# (or skip the others if you will) as soon as possible
+			#
+			if not (vid in VIDS or len(ttys)>0):
+				continue
+			# name needs no underscore
+			curDevice['name'] = subGroup['_name']
+			# list the volume(s) and the circtuipython run files
+			deviceVolumes = []
+			version = ""
+			if 'Media' in subGroup:
+				for media in subGroup['Media']:
+					if "volumes" in media:
+						# list all the volumes of the media
+						for volume in media['volumes']:
+							if 'mount_point' in volume:
+								mount = volume['mount_point']
+								mains,version = get_cp_drive_info(mount)
+								deviceVolumes.append({
+									'mount_point': mount,
+									'mains': mains,
+								})
+					if 'bsd_name' in media:
+						disk = os.path.join("/dev",media['bsd_name'])
+						if disk in allMounts:
+							mount = allMounts[disk]
+							mains,version = get_cp_drive_info(mount)
+							deviceVolumes.append({
+								'mount_point': mount,
+								'mains': mains,
+							})
+			curDevice['volumes'] = deviceVolumes
+			curDevice['version'] = version
+			devices += [curDevice]
+		return devices
+
 	def getDeviceList():
 		global remainingPorts
 		# system_profiler -json SPUSBDataType
@@ -69,109 +163,15 @@ if sys.platform == "darwin":
 		system_profile = json.loads(ses)
 		
 		# list the existing ports
-		remainingPorts = list(filter(lambda x: x.vid != None, serial.tools.list_ports.comports()))
+		remainingPorts = list(filter(lambda x: x.vid is not None, serial.tools.list_ports.comports()))
 		
 		# list the mounts to match the mount points
 		allMounts = {}
 		for part in psutil.disk_partitions():
 			allMounts[part.device] = part.mountpoint
-	
-		# going recursively through all the devices
-		# extracting the important informations
-		# skipping the media infos and listing the volumes
-		def readSysProfile(profile,devices):
-			global remainingPorts
-			for subGroup in profile:
-				# go depth first
-				if "_items" in subGroup:
-					devices = readSysProfile(subGroup['_items'],devices)
-				subGroup['_items'] = None
-				# back to the device
-				curDevice = {}
-				# vid is required
-				if 'vendor_id' not in subGroup:
-					continue
-				try:
-					vid = int(subGroup['vendor_id'].split(" ")[0],16)
-				except:
-					vid = 0
-					continue
-				curDevice['vendor_id'] = vid
-				# product id
-				try:
-					pid = int(subGroup['product_id'].strip().split(" ")[0],16)
-				except:
-					pid = 0
-				curDevice['product_id'] = pid
-				# serial number is not always present
-				if 'serial_num' in subGroup:
-					serial_num = subGroup['serial_num']
-				else:
-					serial_num = ""
-				curDevice['serial_num'] = serial_num
-				# manufacturer is kind of a mess sometimes
-				if 'manufacturer' in subGroup:
-					manufacturer = subGroup['manufacturer']
-				else:
-					manufacturer = ""
-				curDevice['manufacturer'] = manufacturer
-				# try to guess the port using the Location ID or Serial Number
-				ttys = []
-				for x in range(len(remainingPorts)):
-					port = remainingPorts[x]
-					# has SN, match it with the serial ports
-					if port.vid == vid and port.pid == pid \
-						and serial_num != "" and port.serial_number == serial_num:
-						ttys.append(port.device)
-						remainingPorts[x] = None
-					# no SN, use location ID with standard mac paths
-					elif serial_num == "":
-						location = subGroup['location_id'][2:].split()[0]
-						for locationStr in SERIAL_PREFIXES:
-							if port.device.startswith(locationStr+location):
-								ttys.append(port.device)
-								remainingPorts[x] = None
-				remainingPorts = list(filter(lambda x:  x is not None, remainingPorts))
-				curDevice['ports'] = ttys
-				#
-				# now we select all the ones with a known VID or with an existing tty
-				# (or skip the others if you will) as soon as possible
-				#
-				if not (vid in VIDS or len(ttys)>0):
-					continue
-				# name needs no underscore
-				curDevice['name'] = subGroup['_name']
-				# list the volume(s) and the circtuipython run files
-				deviceVolumes = []
-				version = ""
-				if 'Media' in subGroup:
-					for media in subGroup['Media']:
-						if "volumes" in media:
-							# list all the volumes of the media
-							for volume in media['volumes']:
-								if 'mount_point' in volume:
-									mount = volume['mount_point']
-									mains,version = get_cp_drive_info(mount)
-									deviceVolumes.append({
-										'mount_point': mount,
-										'mains': mains,
-									})
-						if 'bsd_name' in media:
-							disk = os.path.join("/dev",media['bsd_name'])
-							if disk in allMounts:
-								mount = allMounts[disk]
-								mains,version = get_cp_drive_info(mount)
-								deviceVolumes.append({
-									'mount_point': mount,
-									'mains': mains,
-								})
-				curDevice['volumes'] = deviceVolumes
-				curDevice['version'] = version
-				devices += [curDevice]
-			return devices
 		
 		# list the devices
-		deviceList = readSysProfile(system_profile['SPUSBDataType'],[])
+		deviceList = readSysProfile(system_profile['SPUSBDataType'], [], allMounts)
 		rp = [port.device for port in remainingPorts]
 		return (deviceList,rp)
 
@@ -208,7 +208,7 @@ elif sys.platform == "linux":
 						ttys.append(tty)
 						if tty in remainingPorts: remainingPorts.remove(tty)
 				if child.device_type == 'partition':
-					volumeName = child.get('ID_FS_LABEL', '')
+					# volumeName = child.get('ID_FS_LABEL', '')
 					node = child.get('DEVNAME','')
 					if node in allMounts:
 						volume = allMounts[node]
