@@ -19,11 +19,11 @@ except:
 	pass
 
 # click.echo/secho
-def echo(text,nl=True,**args):
+def echo(*text,nl=True,**kargs):
 	if DISCOTOOL_NOCOLOR:
-		click.echo(text, nl=nl)
+		click.echo(" ".join(text), nl=nl)
 	else:
-		click.secho(text, nl=nl, **args)
+		click.secho(" ".join(text), nl=nl, **kargs)
 
 # print the reminder
 def showReminder():
@@ -36,7 +36,7 @@ def displayTheBoardsList(bList, ports=[]):
 		return
 	for dev in bList:
 		# display the device name
-		echo("- "+dev['name']+" "+"-" * (70 - len(dev['name'])), fg="yellow", bold=True)
+		echo(f"- {dev['name']}", "-" * (70 - len(dev['name'])), fg="yellow", bold=True)
 		# display tha manufacturer and serial number
 		if dev['manufacturer'] != "":
 			click.echo("\t"+dev['manufacturer'],nl=False)
@@ -60,7 +60,7 @@ def displayTheBoardsList(bList, ports=[]):
 				click.echo("")
 	# remaining serial ports not accounted for
 	if len(ports) > 0:
-		echo("--"+" Unknown Serial Ports "+"-"*50, bold=True)
+		echo("-- Unknown Serial Ports", "-"*50, bold=True)
 		click.echo(" ".join(ports))
 
 # interpret the arguments and select devices based on that
@@ -204,7 +204,7 @@ def repl(ctx):
 			continue
 		port = device['ports'][0]
 		command = SCREEN_COMMAND + [port]
-		echo("- Connecting to "+name+" "+"-"*(56-len(name)), fg="cyan", bold=True)
+		echo(f"- Connecting to {name}", "-"*(56-len(name)), fg="cyan", bold=True)
 		echo("> ", bold=True, nl=False)
 		click.echo(" ".join(command))
 		echo(" "+" ↓ "*24, fg="cyan")
@@ -284,10 +284,10 @@ def backup(ctx, backup_dir, create, date, sub_dir):
 					container_name = re.sub(r"[^A-Za-z0-9]","_",device['name']).strip("_")
 					container_name += "_SN"+device['serial_num']
 					container = os.path.join(targetDir, container_name)
-					click.echo("Backing up "+volume_src+" to\n "+container)
+					click.echo(f"Backing up {volume_src} to\n{container}")
 					shutil.copytree(volume_src, container, dirs_exist_ok = True)
 				else:
-					echo("Not a circuitpython board !", fg="red")
+					echo(f"{volume_src} is not a circuitpython board !", fg="red")
 
 @main.command()
 @click.argument("circup_options", nargs=-1)
