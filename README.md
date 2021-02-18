@@ -32,7 +32,7 @@ Create a config.py file to override default commands.
 - **`--nocolor`**: do not output colors in the terminal.
 
 #### Filters
- Filters select boards from the list of devices found to run a command on them. They are combined with OR logic: anything that matches any filter is selected. All filters are NOT case sensitive. Filters are simple text matches, they don't support wildcards.
+Filters select boards from the list of devices found to run a command on them. They are combined with OR logic: anything that matches any filter is selected. All filters are NOT case sensitive. Filters are simple text matches, they don't support wildcards.
 
 - **`--auto`**: select the first board found. For when a single board is connected.
 - **`--name`**: search in the USB name/description field. Eg: "clue", "QT", "S2".
@@ -56,7 +56,11 @@ Create a config.py file to override default commands.
 	- **`pid`**, **`vid`**, **`sn`**: shortcuts for product_id, vendor_id and serial_num.
 	- **`volume`**: path to the (first) mounted drive of the device.
 	- **`port`**: (first) serial port of the device.
+	- **`repl`**: (first) REPL serial port of the device.
+	- **`cdc`**: (first) non-REPL serial port of the device.
 	- **`main`** or **`code.py`**: full path to the main file for circuitpython.
+-	**`json`** print the output of usbinfo as json for all selected boards.
+	- **`--pretty`**: pretty print it for human reading.
 
 #### Examples:
 

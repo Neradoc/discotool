@@ -108,14 +108,14 @@ if sys.platform == "darwin":
 				# has SN, match it with the serial ports
 				if port.vid == vid and port.pid == pid \
 					and serial_num != "" and port.serial_number == serial_num:
-					ttys.append(port.device)
+					ttys.append((port.device,port.interface))
 					remainingPorts[num_port] = None
 				# no SN, use location ID with standard mac paths
 				elif serial_num == "":
 					location = subGroup['location_id'][2:].split()[0]
 					for locationStr in SERIAL_PREFIXES:
 						if port.device.startswith(locationStr+location):
-							ttys.append(port.device)
+							ttys.append((port.device,port.interface))
 							remainingPorts[num_port] = None
 			remainingPorts = list(filter(lambda x:  x is not None, remainingPorts))
 			curDevice['ports'] = ttys
@@ -163,7 +163,7 @@ if sys.platform == "darwin":
 		system_profile = json.loads(ses)
 		
 		# list the existing ports
-		remainingPorts = list(filter(lambda x: x.vid is not None, serial.tools.list_ports.comports()))
+		remainingPorts = [x for x in serial.tools.list_ports.comports() if x.vid is not None]
 		
 		# list the mounts to match the mount points
 		allMounts = {}
@@ -183,7 +183,7 @@ elif sys.platform == "linux":
 		for part in psutil.disk_partitions():
 			allMounts[part.device] = part.mountpoint
 
-		rp = list(filter(lambda x: x.vid != None, serial.tools.list_ports.comports()))
+		remainingPorts = [x for x in serial.tools.list_ports.comports() if x.vid is not None]
 		remainingPorts = [port.device for port in rp]
 		deviceList = []
 		
@@ -206,7 +206,8 @@ elif sys.platform == "linux":
 					tty = child.get("DEVNAME")
 					if tty != None:
 						ttys.append(tty)
-						if tty in remainingPorts: remainingPorts.remove(tty)
+						if tty in remainingPorts:
+							remainingPorts = [port for port in remainingPorts if remainingPorts.device != tty]
 				if child.device_type == 'partition':
 					# volumeName = child.get('ID_FS_LABEL', '')
 					node = child.get('DEVNAME','')

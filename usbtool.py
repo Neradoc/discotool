@@ -18,6 +18,11 @@ try:
 except:
 	pass
 
+# string description of the circuitpython REPL serial port
+SERIAL_PORT_REPL = "CircuitPython CDC data"
+# string description of the circuitpython secondary serial port
+SERIAL_PORT_CDC2 = "CircuitPython CDC2 data"
+
 # click.echo/secho
 def echo(*text,nl=True,**kargs):
 	if DISCOTOOL_NOCOLOR:
@@ -47,8 +52,8 @@ def displayTheBoardsList(bList, ports=[]):
 		else:
 			click.echo("\t[SN:"+dev['serial_num']+"]")
 		# serial ports
-		for path in dev['ports']:
-			click.echo("\t"+path)
+		for portInfo in dev['ports']:
+			click.echo(f"\t{portInfo[0]} ({portInfo[1]})")
 		# volumes and main files
 		for volume in dev['volumes']:
 			if 'mount_point' in volume:
@@ -202,8 +207,17 @@ def repl(ctx):
 		if len(device['ports']) == 0:
 			echo(f"No serial port found ({name})", fg="red")
 			continue
-		port = device['ports'][0]
-		command = SCREEN_COMMAND + [port]
+		if len(device['ports']) == 1:
+			port = device['ports'][0]
+		else:
+			potential_ports = [pp[0] for pp in device['ports']
+				if pp[1] == SERIAL_PORT_REPL]
+			if len(potential_ports) == 0:
+				port = device['ports'][0]
+			else:
+				port = potential_ports[0]
+		#
+		command = SCREEN_COMMAND + [port[0]]
 		echo(f"- Connecting to {name}", "-"*(56-len(name)), fg="cyan", bold=True)
 		echo("> ", bold=True, nl=False)
 		click.echo(" ".join(command))
@@ -350,7 +364,15 @@ def get(ctx, key):
 		elif key == "port":
 			if 'ports' in device:
 				if len(device['ports']) > 0:
-					values.append(device['ports'][0])
+					values.append(device['ports'][0][0])
+		elif key == "repl":
+			if 'ports' in device:
+				values += [pp[0] for pp in device['ports']
+					if pp[1] == SERIAL_PORT_REPL]
+		elif key == "cdc":
+			if 'ports' in device:
+				values += [pp[0] for pp in device['ports']
+					if pp[1] == SERIAL_PORT_CDC2]
 		elif key == "vid":
 			values.append(device['vendor_id'])
 		elif key == "pid":
@@ -367,13 +389,19 @@ def get(ctx, key):
 	click.echo("\n".join([str(x) for x in values]))
 
 @main.command()
+@click.option(
+	"--pretty", "-p",
+	is_flag=True, help="Pretty print the json with 2 spaces (I know...) indent."
+)
 @click.pass_context
-def json(ctx):
+def json(ctx,pretty):
 	"""
 	Get the values as a json string.
 	"""
 	selectedDevices = ctx.obj["selectedDevices"]
-	click.echo(dumps(selectedDevices))
+	if pretty: indent = 2
+	else: indent = None
+	click.echo(dumps(selectedDevices,indent=indent))
 
 # Allows execution via `python -m circup ...`
 if __name__ == "__main__":
