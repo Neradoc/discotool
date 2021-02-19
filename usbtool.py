@@ -53,7 +53,7 @@ def displayTheBoardsList(bList, ports=[]):
 			click.echo("\t[SN:"+dev['serial_num']+"]")
 		# serial ports
 		for portInfo in dev['ports']:
-			click.echo(f"\t{portInfo[0]} ({portInfo[1]})")
+			click.echo(f"\t{portInfo['dev']} ({portInfo['iface']})")
 		# volumes and main files
 		for volume in dev['volumes']:
 			if 'mount_point' in volume:
@@ -210,14 +210,14 @@ def repl(ctx):
 		if len(device['ports']) == 1:
 			port = device['ports'][0]
 		else:
-			potential_ports = [pp[0] for pp in device['ports']
-				if pp[1] == SERIAL_PORT_REPL]
+			potential_ports = [pp for pp in device['ports']
+						if pp['iface'] == SERIAL_PORT_REPL]
 			if len(potential_ports) == 0:
 				port = device['ports'][0]
 			else:
 				port = potential_ports[0]
 		#
-		command = SCREEN_COMMAND + [port[0]]
+		command = SCREEN_COMMAND + [port['dev']]
 		echo(f"- Connecting to {name}", "-"*(56-len(name)), fg="cyan", bold=True)
 		echo("> ", bold=True, nl=False)
 		click.echo(" ".join(command))
@@ -364,15 +364,15 @@ def get(ctx, key):
 		elif key == "port":
 			if 'ports' in device:
 				if len(device['ports']) > 0:
-					values.append(device['ports'][0][0])
+					values.append(device['ports'][0]['dev'])
 		elif key == "repl":
 			if 'ports' in device:
-				values += [pp[0] for pp in device['ports']
-					if pp[1] == SERIAL_PORT_REPL]
+				values += [pp['dev'] for pp in device['ports']
+					if pp['iface'] == SERIAL_PORT_REPL]
 		elif key == "cdc":
 			if 'ports' in device:
-				values += [pp[0] for pp in device['ports']
-					if pp[1] == SERIAL_PORT_CDC2]
+				values += [pp['dev'] for pp in device['ports']
+					if pp['iface'] == SERIAL_PORT_CDC2]
 		elif key == "vid":
 			values.append(device['vendor_id'])
 		elif key == "pid":
