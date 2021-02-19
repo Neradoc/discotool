@@ -7,7 +7,10 @@ Exposes the getDeviceList() function. Find boards on the host's USB bus and trie
 [{
 	'manufacturer': 'Adafruit Industries LLC',
 	'name': 'CLUE nRF52840 Express',
-	'ports': ['/dev/cu.usbmodem144443111'],
+	'ports': [{
+		"dev": "'/dev/cu.usbmodem144443111'",
+		"iface": "CircuitPython CDC data"
+	}],
 	'product_id': 32882,
 	'serial_num': 'F88EE0399C0E1FC6',
 	'vendor_id': 9114,
