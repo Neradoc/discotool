@@ -18,10 +18,10 @@ try:
 except:
 	pass
 
-# string description of the circuitpython REPL serial port
-SERIAL_PORT_REPL = "CircuitPython CDC data"
-# string description of the circuitpython secondary serial port
-SERIAL_PORT_CDC2 = "CircuitPython CDC2 data"
+# string description of the circuitpython REPL serial port (startswith)
+SERIAL_PORT_REPL = "CircuitPython CDC "
+# string description of the circuitpython secondary serial port (startswith)
+SERIAL_PORT_CDC2 = "CircuitPython CDC2 "
 
 # click.echo/secho
 def echo(*text,nl=True,**kargs):
@@ -211,7 +211,7 @@ def repl(ctx):
 			port = device['ports'][0]
 		else:
 			potential_ports = [pp for pp in device['ports']
-						if pp['iface'] == SERIAL_PORT_REPL]
+						if pp['iface'].startswith(SERIAL_PORT_REPL)]
 			if len(potential_ports) == 0:
 				port = device['ports'][0]
 			else:
@@ -368,11 +368,11 @@ def get(ctx, key):
 		elif key == "repl":
 			if 'ports' in device:
 				values += [pp['dev'] for pp in device['ports']
-					if pp['iface'] == SERIAL_PORT_REPL]
+					if pp['iface'].startswith(SERIAL_PORT_REPL)]
 		elif key == "cdc":
 			if 'ports' in device:
 				values += [pp['dev'] for pp in device['ports']
-					if pp['iface'] == SERIAL_PORT_CDC2]
+					if pp['iface'].startswith(SERIAL_PORT_CDC2)]
 		elif key == "vid":
 			values.append(device['vendor_id'])
 		elif key == "pid":
