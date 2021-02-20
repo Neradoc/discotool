@@ -184,7 +184,6 @@ elif sys.platform == "linux":
 			allMounts[part.device] = part.mountpoint
 
 		remainingPorts = [x for x in serial.tools.list_ports.comports() if x.vid is not None]
-		remainingPorts = [port.device for port in rp]
 		deviceList = []
 		
 		context = pyudev.Context()
@@ -205,9 +204,16 @@ elif sys.platform == "linux":
 				if child.subsystem == "tty":
 					tty = child.get("DEVNAME")
 					if tty != None:
-						ttys.append(tty)
-						if tty in remainingPorts:
-							remainingPorts = [port for port in remainingPorts if remainingPorts.device != tty]
+						found = False
+						for x in len(remainingPorts):
+							port = remainingPorts[x]
+							if tty == port.device:
+								ttys.append({'dev':port.device,'iface':port.interface})
+								remainingPorts[x] = None
+								found = True
+						remainingPorts = [port for port in remainingPorts if port != None]
+						if not found:
+							ttys.append({'dev':tty,'iface':""})
 				if child.device_type == 'partition':
 					# volumeName = child.get('ID_FS_LABEL', '')
 					node = child.get('DEVNAME','')
