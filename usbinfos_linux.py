@@ -13,7 +13,7 @@ def getDeviceList():
 	for part in psutil.disk_partitions():
 		allMounts[part.device] = part.mountpoint
 
-	remainingPorts = [x for x in serial.tools.list_ports.comports() if x.vid is not None]
+	remainingPorts = [x for x in comports() if x.vid is not None]
 	deviceList = []
 	
 	context = pyudev.Context()
@@ -35,8 +35,7 @@ def getDeviceList():
 				tty = child.get("DEVNAME")
 				if tty != None:
 					found = False
-					for x in len(remainingPorts):
-						port = remainingPorts[x]
+					for x,port in enumerate(remainingPorts):
 						if tty == port.device:
 							ttys.append({'dev':port.device,'iface':port.interface})
 							remainingPorts[x] = None
@@ -61,14 +60,14 @@ def getDeviceList():
 		# go through parents and find "devpath", remove matching parents
 		def noParent(dev):
 			for papa in device.traverse():
-				if devpath.startswith(papa.get('DEVPATH')):
+				if devpath.startswith(dev['devpath']):
 					return False
 			return True
 		deviceList = list(filter(noParent,deviceList))
 		#
 		if vid not in VIDS and len(ttys) == 0: continue
 		#
-		#curDevice['devpath'] = devpath
+		curDevice['devpath'] = devpath
 		curDevice['volumes'] = deviceVolumes
 		curDevice['name'] = name
 		curDevice['vendor_id'] = vid
@@ -78,4 +77,6 @@ def getDeviceList():
 		curDevice['manufacturer'] = device.get('ID_VENDOR','')
 		deviceList.append(curDevice)
 	#
+	for i in range(len(deviceList)):
+		del deviceList[i]['devpath']
 	return (deviceList,remainingPorts)
