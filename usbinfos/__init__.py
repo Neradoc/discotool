@@ -23,10 +23,10 @@ the API:
 import sys
 
 if sys.platform == "darwin":
-	from usbinfos_macos import getDeviceList
+	from .usbinfos_macos import getDeviceList
 
 elif sys.platform == "linux":
-	from usbinfos_linux import getDeviceList
+	from .usbinfos_linux import getDeviceList
 
 else:
 	raise ImportError("Platform not supported")

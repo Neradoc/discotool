@@ -5,7 +5,7 @@ import subprocess
 import psutil
 import pyudev
 from serial.tools.list_ports import comports
-from usbinfos_common import *
+from .usbinfos_common import *
 
 # list the drive info for a circuipython drive (code or main and version)
 def get_cp_drive_info(mount):

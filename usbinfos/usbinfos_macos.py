@@ -3,9 +3,9 @@
 import os, json, sys
 import subprocess
 import psutil
-from pyserial_list_ports_osx import comports
 #from serial.tools.list_ports import comports
-from usbinfos_common import *
+from .pyserial_list_ports_osx import comports
+from .usbinfos_common import *
 
 # where to find serial ports named by location on macOS
 # NOTE: we don't check for /dev/tty.usbmodem<serial_num>
