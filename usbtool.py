@@ -53,7 +53,12 @@ def displayTheBoardsList(bList, ports=[]):
 			click.echo("\t[SN:"+dev['serial_num']+"]")
 		# serial ports
 		for portInfo in dev['ports']:
-			click.echo(f"\t{portInfo['dev']} ({portInfo['iface']})")
+			iface = portInfo['iface']
+			if iface.startswith(SERIAL_PORT_REPL):
+				iface = "REPL"
+			elif iface.startswith(SERIAL_PORT_CDC2):
+				iface = "CDC2"
+			click.echo(f"\t{portInfo['dev']} ({iface})")
 		# volumes and main files
 		for volume in dev['volumes']:
 			if 'mount_point' in volume:
