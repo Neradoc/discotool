@@ -7,6 +7,21 @@ import pyudev
 from serial.tools.list_ports import comports
 from usbinfos_common import *
 
+# list the drive info for a circuipython drive (code or main and version)
+def get_cp_drive_info(mount):
+	mains = []
+	for mainFile in mainNames:
+		if os.path.exists(os.path.join(mount,mainFile)):
+			mains += [mainFile]
+	boot_out = os.path.join(mount, "boot_out.txt")
+	try:
+		with open(boot_out) as boot:
+			circuit_python, _ = boot.read().split(";")
+			version = circuit_python.split(" ")[-3]
+	except (FileNotFoundError,ValueError,IndexError):
+		version = ""
+	return (mains,version)
+
 def getDeviceList():
 	# get drives by mountpoint
 	allMounts = {}
@@ -29,6 +44,7 @@ def getDeviceList():
 		SN = device.get('ID_SERIAL_SHORT','')
 		devpath = device.get('DEVPATH')
 		ttys = []
+		version = ""
 		#for ki in device.properties: print(ki,device.properties[ki])
 		for child in device.children:
 			if child.subsystem == "tty":
@@ -48,10 +64,7 @@ def getDeviceList():
 				node = child.get('DEVNAME','')
 				if node in allMounts:
 					volume = allMounts[node]
-					mains = []
-					for mainFile in mainNames:
-						if os.path.exists(os.path.join(volume,mainFile)):
-							mains.append(mainFile)
+					mains,version = get_cp_drive_info(volume)
 					deviceVolumes.append({
 						'mount_point': volume,
 						'mains': mains,
@@ -67,6 +80,7 @@ def getDeviceList():
 		#
 		if vid not in VIDS and len(ttys) == 0: continue
 		#
+		curDevice['version'] = version
 		curDevice['devpath'] = devpath
 		curDevice['volumes'] = deviceVolumes
 		curDevice['name'] = name
