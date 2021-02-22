@@ -104,6 +104,17 @@ def find_the_devices(deviceList, auto, wait, name, serial, mount):
 						selectedDevices.append(device)
 	return selectedDevices
 
+# remove macOS ._ files from a drive (or directory)
+def tree_clean(root, force=False):
+	for target in os.listdir(root):
+		file = os.path.join(root,target)
+		if os.path.isdir(file):
+			tree_clean(file)
+		else:
+			if os.path.basename(file).startswith("._"):
+				if force or click.confirm(f"Delete {file} ?"):
+					os.remove(file)
+
 @click.group(invoke_without_command=True, cls=ClickAliasedGroup)
 @click.option(
 	"--auto", "-a",
@@ -334,6 +345,39 @@ def circup(ctx, circup_options):
 				click.echo(" ".join(command))
 				subprocess.call(command)
 				break
+
+
+@main.command()
+@click.option(
+	"--yes", "-y",
+	is_flag=True, help="Always accept deleting without asking."
+)
+@click.pass_context
+def cleanup(ctx, yes):
+	"""
+	Remove unwanted files from selected drives (macOS's ._* files).
+	"""
+	selectedDevices = ctx.obj["selectedDevices"]
+	if len(selectedDevices) == 0:
+		echo("No device selected", fg="magenta")
+	else:
+		echo("- CLEANING FILES "+"-"*60, fg="green", bold=True)
+		for device in selectedDevices:
+			for volume in device['volumes']:
+				try:
+					volume_src = volume['mount_point']
+					volume_bootout = os.path.join(volume_src,"boot_out.txt")
+					# only cleanup circuitpython boards
+					if os.path.exists(volume_src) and os.path.exists(volume_bootout):
+						echo(f"Cleanup on drive: {volume_src}",fg="cyan")
+						# erase all "._*" files
+						tree_clean(volume_src, yes)
+					else:
+						echo(f"{volume_src} is not a circuitpython board !", fg="red")
+				except Exception as ex:
+					echo("An error occurred, skipping drive:", fg="red")
+					echo("\t", str(ex), fg="red")
+
 
 @main.command()
 @click.argument("key", required=True)
