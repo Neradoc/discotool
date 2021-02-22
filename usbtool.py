@@ -4,6 +4,7 @@ import os, time, sys, re
 import subprocess, shutil, click
 from json import dumps
 import usbinfos
+from click_aliases import ClickAliasedGroup
 
 # command line to connect to the REPL (screen, tio)
 SCREEN_COMMAND = ["screen"]
@@ -103,7 +104,7 @@ def find_the_devices(deviceList, auto, wait, name, serial, mount):
 						selectedDevices.append(device)
 	return selectedDevices
 
-@click.group(invoke_without_command=True)
+@click.group(invoke_without_command=True, cls=ClickAliasedGroup)
 @click.option(
 	"--auto", "-a",
 	is_flag=True, help="Pick the first board found for commands."
@@ -308,7 +309,7 @@ def backup(ctx, backup_dir, create, date, sub_dir):
 				else:
 					echo(f"{volume_src} is not a circuitpython board !", fg="red")
 
-@main.command()
+@main.command(aliases=['cu'])
 @click.argument("circup_options", nargs=-1)
 @click.pass_context
 def circup(ctx, circup_options):
@@ -330,15 +331,6 @@ def circup(ctx, circup_options):
 				click.echo(" ".join(command))
 				subprocess.call(command)
 				break
-
-@main.command()
-@click.argument("circup_options", nargs=-1)
-@click.pass_context
-def cu(ctx, circup_options):
-	"""
-	Alias to circup.
-	"""
-	ctx.invoke(circup, circup_options=circup_options)
 
 @main.command()
 @click.argument("key", required=True)
