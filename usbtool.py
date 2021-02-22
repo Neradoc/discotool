@@ -236,7 +236,7 @@ def repl(ctx):
 @click.pass_context
 def eject(ctx):
 	"""
-	Eject the disk volume(s) from the matching device (Mac only now).
+	Eject the disk volume(s) from the matching device (Mac only).
 	"""
 	selectedDevices = ctx.obj["selectedDevices"]
 	if len(selectedDevices) == 0:
@@ -245,10 +245,13 @@ def eject(ctx):
 		echo("- EJECTING DRIVES "+"-"*55, fg="magenta", bold=True)
 		for device in selectedDevices:
 			for volume in device['volumes']:
-				volumeName = os.path.basename(volume['mount_point'])
-				command = ["osascript", "-e", "tell application \"Finder\" to eject \"{}\"".format(volumeName)]
-				click.echo("Ejecting: "+volumeName)
-				subprocess.call(command)
+				if sys.platform == "darwin":
+					volumeName = os.path.basename(volume['mount_point'])
+					command = ["osascript", "-e", "tell application \"Finder\" to eject \"{}\"".format(volumeName)]
+					click.echo("Ejecting: "+volumeName)
+					subprocess.call(command)
+				else:
+					echo(f"Not implemented on {sys.platform}", fg="red")
 
 @main.command()
 @click.argument(
@@ -299,7 +302,7 @@ def backup(ctx, backup_dir, create, date, sub_dir):
 			for volume in device['volumes']:
 				volume_src = volume['mount_point']
 				volume_bootout = os.path.join(volume_src,"boot_out.txt")
-				# only circup circuitpython boards
+				# only backup circuitpython boards
 				if os.path.exists(volume_src) and os.path.exists(volume_bootout):
 					container_name = re.sub(r"[^A-Za-z0-9]","_",device['name']).strip("_")
 					container_name += "_SN"+device['serial_num']
