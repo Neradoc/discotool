@@ -392,6 +392,8 @@ def get(ctx, key):
 	'main' or 'code.py' gives the path to the main Circuitpython file.
 	'vid' and 'pid' are shortcuts for vendor_id and product_id.
 	'sn' is a shortcut for serial_num.
+	'repl' is the serial port identified as Circuitpython REPL
+	'cdc' is the serial port identified as Circuitpython CDC2
 	
 	Example: screen `discotool -n clue get port`
 	"""
@@ -409,14 +411,17 @@ def get(ctx, key):
 					values.append(device['volumes'][0]['mount_point'])
 		elif key == "port":
 			if 'ports' in device:
+				device['ports'].sort(key = lambda port: port['dev'])
 				if len(device['ports']) > 0:
 					values.append(device['ports'][0]['dev'])
 		elif key == "repl":
 			if 'ports' in device:
+				device['ports'].sort(key = lambda port: port['dev'])
 				values += [pp['dev'] for pp in device['ports']
 					if pp['iface'].startswith(SERIAL_PORT_REPL)]
 		elif key == "cdc":
 			if 'ports' in device:
+				device['ports'].sort(key = lambda port: port['dev'])
 				values += [pp['dev'] for pp in device['ports']
 					if pp['iface'].startswith(SERIAL_PORT_CDC2)]
 		elif key == "vid":
