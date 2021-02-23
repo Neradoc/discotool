@@ -53,7 +53,8 @@ def getDeviceList():
 					found = False
 					for x,port in enumerate(remainingPorts):
 						if tty == port.device:
-							ttys.append({'dev':port.device,'iface':port.interface})
+							iface = port.interface or ""
+							ttys.append({'dev':port.device,'iface':iface})
 							remainingPorts[x] = None
 							found = True
 					remainingPorts = [port for port in remainingPorts if port != None]

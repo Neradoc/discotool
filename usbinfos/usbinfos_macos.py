@@ -73,14 +73,16 @@ def readSysProfile(profile,devices,allMounts):
 			# has SN, match it with the serial ports
 			if port.vid == vid and port.pid == pid \
 				and serial_num != "" and port.serial_number == serial_num:
-				ttys.append({'dev':port.device,'iface':port.interface})
+				iface = port.interface or ""
+				ttys.append({'dev':port.device,'iface':iface})
 				remainingPorts[num_port] = None
 			# no SN, use location ID with standard mac paths
 			elif serial_num == "":
 				location = subGroup['location_id'][2:].split()[0]
 				for locationStr in SERIAL_PREFIXES:
 					if port.device.startswith(locationStr+location):
-						ttys.append({'dev':port.device,'iface':port.interface})
+						iface = port.interface or ""
+						ttys.append({'dev':port.device,'iface':iface})
 						remainingPorts[num_port] = None
 		remainingPorts = list(filter(lambda x:  x is not None, remainingPorts))
 		curDevice['ports'] = ttys
