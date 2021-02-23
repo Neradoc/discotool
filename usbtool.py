@@ -31,10 +31,6 @@ def echo(*text,nl=True,**kargs):
 	else:
 		click.secho(" ".join(text), nl=nl, **kargs)
 
-# print the reminder
-def showReminder():
-	echo("Filters: --name --serial --mount --auto --wait \nCommands: list, repl, eject, backup <to_dir>, circup <options> ",fg="white",dim="true")
-
 # print the text from main
 def displayTheBoardsList(bList, ports=[]):
 	if len(bList) == 0 and len(ports) == 0:
@@ -214,7 +210,6 @@ def list(ctx):
 	"""
 	List all the devices that have been detected.
 	"""
-	showReminder()
 	deviceList = ctx.obj["deviceList"]
 	remainingPorts = ctx.obj["remainingPorts"]
 	displayTheBoardsList(deviceList, remainingPorts)
@@ -225,7 +220,6 @@ def repl(ctx):
 	"""
 	Connect to the REPL of the selected device.
 	"""
-	showReminder()
 	selectedDevices = ctx.obj["selectedDevices"]
 	for device in selectedDevices:
 		name = device['name']
