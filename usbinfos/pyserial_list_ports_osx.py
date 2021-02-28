@@ -269,8 +269,8 @@ def comports(include_links=False):
 	serial_interfaces = scan_interfaces()
 	for service in services:
 		# First, add the callout device file.
-		#device = get_string_property(service, "IOCalloutDevice")
-		device = get_string_property(service, "IODialinDevice")
+		device = get_string_property(service, "IOCalloutDevice")
+		#device = get_string_property(service, "IODialinDevice")
 		if device:
 			info = list_ports_common.ListPortInfo(device)
 			# find the serial interface associated with this device
