@@ -24,12 +24,14 @@ SERIAL_PORT_REPL = "CircuitPython CDC "
 # string description of the circuitpython secondary serial port (startswith)
 SERIAL_PORT_CDC2 = "CircuitPython CDC2 "
 
+
 # click.echo/secho
 def echo(*text,nl=True,**kargs):
 	if DISCOTOOL_NOCOLOR:
 		click.echo(" ".join(text), nl=nl)
 	else:
 		click.secho(" ".join(text), nl=nl, **kargs)
+
 
 # print the text from main
 def displayTheBoardsList(bList, ports=[]):
@@ -78,6 +80,7 @@ def displayTheBoardsList(bList, ports=[]):
 		echo("-- Unknown Serial Ports", "-"*50, bold=True)
 		click.echo(" ".join(ports))
 
+
 # interpret the arguments and select devices based on that
 def find_the_devices(deviceList, auto, wait, name, serial, mount):
 	selectedDevices = []
@@ -108,6 +111,7 @@ def find_the_devices(deviceList, auto, wait, name, serial, mount):
 						selectedDevices.append(device)
 	return selectedDevices
 
+
 # remove macOS ._ files from a drive (or directory)
 def tree_clean(root, force=False):
 	for target in os.listdir(root):
@@ -118,6 +122,7 @@ def tree_clean(root, force=False):
 			if os.path.basename(file).startswith("._"):
 				if force or click.confirm(f"Delete {file} ?"):
 					os.remove(file)
+
 
 @click.group(invoke_without_command=True, cls=ClickAliasedGroup)
 @click.option(
@@ -204,6 +209,7 @@ def main(ctx, auto, wait, name, serial, mount, nocolor):
 		else:
 			ctx.invoke(repl)
 
+
 @main.command()
 @click.pass_context
 def list(ctx):
@@ -213,6 +219,7 @@ def list(ctx):
 	deviceList = ctx.obj["deviceList"]
 	remainingPorts = ctx.obj["remainingPorts"]
 	displayTheBoardsList(deviceList, remainingPorts)
+
 
 @main.command()
 @click.pass_context
@@ -265,6 +272,7 @@ def eject(ctx):
 					subprocess.call(command)
 				else:
 					echo(f"Not implemented on {sys.platform}", fg="red")
+
 
 @main.command()
 @click.argument(
@@ -325,6 +333,7 @@ def backup(ctx, backup_dir, create, date, sub_dir):
 				else:
 					echo(f"{volume_src} is not a circuitpython board !", fg="red")
 
+
 @main.command(aliases=['cu'])
 @click.argument("circup_options", nargs=-1)
 @click.pass_context
@@ -347,6 +356,34 @@ def circup(ctx, circup_options):
 				click.echo(" ".join(command))
 				subprocess.call(command)
 				break
+
+
+@main.command()
+@click.argument("circup_options", nargs=-1)
+@click.pass_context
+def install(ctx, circup_options):
+	"""
+	Call circup install on the selected device with the given options.
+	"""
+	circup_options = ("install",) + circup_options
+	ctx.invoke(circup, circup_options = circup_options)
+
+
+@main.command()
+@click.option(
+	"--all",
+	is_flag=True, help="Update all modules without Major Version warnings."
+)
+@click.pass_context
+def update(ctx, all):
+	"""
+	Call circup update on the selected device with the given options.
+	"""
+	if all:
+		circup_options = ("update","--all",)
+	else:
+		circup_options = ("update",)
+	ctx.invoke(circup, circup_options = circup_options)
 
 
 @main.command()
@@ -439,6 +476,7 @@ def get(ctx, key):
 							values.append(path)
 	click.echo("\n".join([str(x) for x in values]))
 
+
 @main.command()
 @click.option(
 	"--pretty", "-p",
@@ -453,7 +491,3 @@ def json(ctx,pretty):
 	if pretty: indent = 2
 	else: indent = None
 	click.echo(dumps(selectedDevices,indent=indent))
-
-# Allows execution via `python -m circup ...`
-if __name__ == "__main__":
-	main()
