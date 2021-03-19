@@ -28,6 +28,9 @@ if sys.platform == "darwin":
 elif sys.platform == "linux":
 	from .usbinfos_linux import getDeviceList
 
+elif sys.platform == "win32":
+	from .usbinfos_win32 import getDeviceList
+
 else:
 	raise ImportError("Platform not supported")
 

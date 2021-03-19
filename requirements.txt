@@ -3,3 +3,4 @@ click-aliases==1.0.1
 psutil>=5.8.0
 pyserial>=3.4
 pyudev
+pywin32
