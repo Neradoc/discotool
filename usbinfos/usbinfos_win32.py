@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 
-import os, json, sys
-import ctypes
-import subprocess
-import psutil
+import os
+import re
 import wmi
 from .pyserial_list_ports_windows import comports
 from .usbinfos_common import *
@@ -23,9 +21,19 @@ def get_cp_drive_info(mount):
 		version = ""
 	return (mains,version)
 
+def filter_port_description(description):
+	m = re.match(".*%(.+)%.*", description)
+	if m:
+		name = m.group(1)
+	else:
+		name = description
+	return name.replace("_"," ").title()
+
 def getDeviceList():
 	remainingPorts = [x for x in comports() if x.vid is not None]
 	deviceList = []
+
+	serialNumbers = [{"serial_number": x.serial_number} for x in remainingPorts]
 	
 	allMounts = []
 	wmi_info = wmi.WMI()
@@ -40,15 +48,17 @@ def getDeviceList():
 			"disk": physical_disk,
 			"volumes": volumes,
 		})
+		serialNumbers.append({"serial_number":physical_disk.SerialNumber})
 	
 	# ici on veut la liste des devices USB - comment ?
 	devices = allMounts
+	devices = serialNumbers
 
 	for device in devices:
 		curDevice = {}
 		deviceVolumes = []
-		name = device["disk"].caption
-		SN = device["disk"].SerialNumber
+		name = ""
+		SN = device['serial_number']
 
 		ttys = []
 		vid = "0"
@@ -58,6 +68,7 @@ def getDeviceList():
 			if port.serial_number == SN:
 				vid = port.vid
 				pid = port.pid
+				name = filter_port_description(port.description)
 				manufacturer = port.manufacturer
 				iface = port.interface or ""
 				ttys.append({'dev':port.device,'iface':iface})
@@ -69,14 +80,17 @@ def getDeviceList():
 
 		version = ""
 		deviceVolumes = []
-
-		for disk in device["volumes"]:
-			volume = disk.DeviceID
-			mains,version = get_cp_drive_info(volume)
-			deviceVolumes.append({
-				'mount_point': volume,
-				'mains': mains,
-			})
+		for mount in allMounts:
+			if mount["disk"].SerialNumber == device['serial_number']:
+				if name == "":
+					name = mount["disk"].caption
+				for disk in mount["volumes"]:
+					volume = disk.DeviceID
+					mains,version = get_cp_drive_info(volume)
+					deviceVolumes.append({
+						'mount_point': volume+"\\",
+						'mains': mains,
+					})
 		
 		curDevice['version'] = version
 		curDevice['volumes'] = deviceVolumes
@@ -86,54 +100,6 @@ def getDeviceList():
 		curDevice['serial_num'] = SN
 		curDevice['ports'] = ttys
 		curDevice['manufacturer'] = manufacturer
-		deviceList.append(curDevice)
-		continue
-
-		#for ki in device.properties: print(ki,device.properties[ki])
-		for child in device.children:
-			if child.subsystem == "tty":
-				tty = child.get("DEVNAME")
-				if tty != None:
-					found = False
-					for x,port in enumerate(remainingPorts):
-						if tty == port.device:
-							iface = port.interface or ""
-							ttys.append({'dev':port.device,'iface':iface})
-							remainingPorts[x] = None
-							found = True
-					remainingPorts = [port for port in remainingPorts if port != None]
-					if not found:
-						ttys.append({'dev':tty,'iface':""})
-			if child.device_type == 'partition':
-				# volumeName = child.get('ID_FS_LABEL', '')
-				node = child.get('DEVNAME','')
-				if node in allMounts:
-					volume = allMounts[node]
-					mains,version = get_cp_drive_info(volume)
-					deviceVolumes.append({
-						'mount_point': volume,
-						'mains': mains,
-					})
-		#
-		# go through parents and find "devpath", remove matching parents
-		def noParent(dev):
-			for papa in device.traverse():
-				if devpath.startswith(dev['devpath']):
-					return False
-			return True
-		deviceList = list(filter(noParent,deviceList))
-		#
-		if vid not in VIDS and len(ttys) == 0: continue
-		#
-		curDevice['version'] = version
-		curDevice['devpath'] = devpath
-		curDevice['volumes'] = deviceVolumes
-		curDevice['name'] = name
-		curDevice['vendor_id'] = vid
-		curDevice['product_id'] = int(device.get('ID_MODEL_ID'),16)
-		curDevice['serial_num'] = SN
-		curDevice['ports'] = ttys
-		curDevice['manufacturer'] = device.get('ID_VENDOR','')
 		deviceList.append(curDevice)
 	#
 	return (deviceList,remainingPorts)
