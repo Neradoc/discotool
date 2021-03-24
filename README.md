@@ -1,7 +1,7 @@
 ## USB Infos / Disco Tool
 Module and tool to discover all boards connected to USB.
 
-### `usbinfo.py` module
+### usbinfos module
 Exposes the getDeviceList() function. Find boards on the host's USB bus and tries to match them with serial ports and mounted drives, virtual or not. When a drive is found, it lists circuitpython information if available: CPY version number and main files (code.py, etc.). Returns the list of boards found with their information, and a list of unmatched serial ports.
 ```python
 [{
@@ -23,7 +23,7 @@ Exposes the getDeviceList() function. Find boards on the host's USB bus and trie
 It currently runs on macOS™ (Catalina) using a system tool, and on linux using udev.  
 Python modules required: `python3 -m pip install pyserial psutil click` and `pyudev` on linux.
 
-## `usbtool.py` use
+## usbtool.py use
 
 Create a config.py file to override default commands.
 - `SCREEN_COMMAND = ["screen"]` command to connect to the REPL (tio, picocom, etc.)
