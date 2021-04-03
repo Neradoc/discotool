@@ -25,14 +25,16 @@ Python modules required: `python3 -m pip install pyserial psutil click` and `pyu
 
 ## usbtool.py use
 
-Create a config.py file to override default commands.
-- `SCREEN_COMMAND = ["screen"]` command to connect to the REPL (tio, picocom, etc.)
-- `CIRCUP_COMMAND = ["circup"]` command to call circup
+Define environment variables to override the default command line tools used by discotool. They are called by appending the relevant parameters at the end.
+- `DISCOTOOL_SERIALTOOL` (`screen`) command to connect to the REPL (tio, picocom, etc.)
+- `DISCOTOOL_CIRCUP` (`circup`) command to call circup (`pip install` it for the default)
+- `DISCOTOOL_NOCOLOR` disables colors in the output is it evaluates to True
 
 ### Command line options
 
 - **`--wait`**: runs the scan every second until it detects a board.
-- **`--nocolor`**: do not output colors in the terminal.
+- **`--nocolor`**: do not output colors in the terminal (overrides all else).
+- **`--color`**: output colors in the terminal (overrides all else).
 
 #### Filters
 Filters select boards from the list of devices found to run a command on them. They are combined with OR logic: anything that matches any filter is selected. All filters are NOT case sensitive. Filters are simple text matches, they don't support wildcards.

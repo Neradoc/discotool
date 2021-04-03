@@ -6,18 +6,19 @@ from json import dumps
 import usbinfos
 from click_aliases import ClickAliasedGroup
 
-# command line to connect to the REPL (screen, tio)
-SCREEN_COMMAND = ["screen"]
-# command line to call circup
-CIRCUP_COMMAND = ["circup"]
-# disable colors
-DISCOTOOL_NOCOLOR = False
+conf = {
+	# command line to connect to the REPL (screen, tio)
+	"DISCOTOOL_SERIALTOOL" : "screen",
+	# command line to call circup
+	"DISCOTOOL_CIRCUP" : "circup",
+	# disable colors
+	"DISCOTOOL_NOCOLOR" : False,
+}
 
-# override configuration constants with config.py
-try:
-	from config import *
-except:
-	pass
+# override configuration constants with environement variables
+for var in conf:
+	if var in os.environ:
+		conf[var] = os.environ[var]
 
 # string description of the circuitpython REPL serial port (startswith)
 SERIAL_PORT_REPL = "CircuitPython CDC "
@@ -27,7 +28,7 @@ SERIAL_PORT_CDC2 = "CircuitPython CDC2 "
 
 # click.echo/secho
 def echo(*text,nl=True,**kargs):
-	if DISCOTOOL_NOCOLOR:
+	if bool(conf['DISCOTOOL_NOCOLOR']):
 		click.echo(" ".join(text), nl=nl)
 	else:
 		click.secho(" ".join(text), nl=nl, **kargs)
@@ -152,13 +153,18 @@ def tree_clean(root, force=False):
 	"--nocolor",
 	is_flag=True, help="Disable colors in the terminal."
 )
+@click.option(
+	"--color",
+	is_flag=True, help="Enable colors in the terminal."
+)
 @click.pass_context
-def main(ctx, auto, wait, name, serial, mount, nocolor):
+def main(ctx, auto, wait, name, serial, mount, nocolor, color):
 	ctx.ensure_object(dict)
 	# no colors
-	if nocolor or 'DISCOTOOL_NOCOLOR' in os.environ:
-		global DISCOTOOL_NOCOLOR
-		DISCOTOOL_NOCOLOR = True
+	if nocolor:
+		conf['DISCOTOOL_NOCOLOR'] = True
+	if color:
+		conf['DISCOTOOL_NOCOLOR'] = False
 	# normalize the inputs
 	name = name.lower().strip()
 	serial = serial.lower().strip()
@@ -243,12 +249,12 @@ def repl(ctx):
 			else:
 				port = potential_ports[0]
 		#
-		command = SCREEN_COMMAND + [port['dev']]
+		command = conf['DISCOTOOL_SERIALTOOL'] + " " + port['dev']
 		echo(f"- Connecting to {name}", "-"*(56-len(name)), fg="cyan", bold=True)
 		echo("> ", bold=True, nl=False)
-		click.echo(" ".join(command))
+		click.echo(command)
 		echo(" "+" ↓ "*24, fg="cyan")
-		subprocess.call(command)
+		subprocess.run(command, shell=True)
 		click.echo("Fin.")
 
 
@@ -349,7 +355,7 @@ def circup(ctx, circup_options):
 			volume_bootout = os.path.join(volume_src,"boot_out.txt")
 			# only circup circuitpython boards
 			if os.path.exists(volume_src) and os.path.exists(volume_bootout):
-				command = CIRCUP_COMMAND+["--path", volume_src]
+				command = conf['DISCOTOOL_CIRCUP']+["--path", volume_src]
 				command += [x for x in circup_options]
 				echo("- Running circup on "+name+" "+"-"*(56-len(device['name'])), fg="cyan", bold=True)
 				echo("> ", bold=True, nl=False)
