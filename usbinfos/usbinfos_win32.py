@@ -50,8 +50,8 @@ def getDeviceList():
 		})
 		serialNumbers.append({"serial_number":physical_disk.SerialNumber})
 	
-	# ici on veut la liste des devices USB - comment ?
-	devices = allMounts
+	# how to get the actual list of USB connected devices in a useful way ?
+	# for now we take anything with a serial number: serial ports and disk drives
 	devices = serialNumbers
 
 	for device in devices:
