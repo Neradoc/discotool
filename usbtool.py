@@ -249,12 +249,12 @@ def repl(ctx):
 			else:
 				port = potential_ports[0]
 		#
-		command = conf['DISCOTOOL_SERIALTOOL'] + " " + port['dev']
+		command = [conf['DISCOTOOL_SERIALTOOL'], port['dev']]
 		echo(f"- Connecting to {name}", "-"*(56-len(name)), fg="cyan", bold=True)
 		echo("> ", bold=True, nl=False)
-		click.echo(command)
+		click.echo(" ".join(command))
 		echo(" "+" ↓ "*24, fg="cyan")
-		subprocess.run(command, shell=True)
+		subprocess.run(" ".join(command), shell=True)
 		click.echo("Fin.")
 
 
@@ -355,12 +355,12 @@ def circup(ctx, circup_options):
 			volume_bootout = os.path.join(volume_src,"boot_out.txt")
 			# only circup circuitpython boards
 			if os.path.exists(volume_src) and os.path.exists(volume_bootout):
-				command = conf['DISCOTOOL_CIRCUP']+["--path", volume_src]
+				command = [conf['DISCOTOOL_CIRCUP'], "--path", volume_src]
 				command += [x for x in circup_options]
 				echo("- Running circup on "+name+" "+"-"*(56-len(device['name'])), fg="cyan", bold=True)
 				echo("> ", bold=True, nl=False)
 				click.echo(" ".join(command))
-				subprocess.call(command)
+				subprocess.run(" ".join(command), shell=True)
 				break
 
 
