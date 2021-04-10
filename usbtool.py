@@ -15,6 +15,10 @@ conf = {
 	"DISCOTOOL_NOCOLOR" : False,
 }
 
+# windows versions
+if sys.platform == "win32":
+	conf['DISCOTOOL_SERIALTOOL'] = "putty -sercfg 115200 -serial"
+
 # override configuration constants with environement variables
 for var in conf:
 	if var in os.environ:
