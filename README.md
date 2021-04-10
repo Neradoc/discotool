@@ -54,8 +54,9 @@ Filters select boards from the list of devices found to run a command on them. T
 -	**`list`** lists all the boards that have been detected, with name, manufacturer, serial number. Lists the serial ports and file volumes, identifying circuitpython code files present, as well as CPY version.
 -	**`repl`** connect to the REPL of the selected boards using the tool specified, screen by default, choosing the first serial port found if there is more than one.
 -	**`eject`** eject all selected board drives, or all found if no filter given. (macOS only for now)
--	**`backup <destination dir> [<sub dir>]`** copy the content of the selected boards drives into the destination dir or the optional sub dir (that will be created for you). Each board is put in a directory with it's name and serial number.
+-	**`backup <destination dir> [<sub dir>]`** copy the content of the selected boards drives into the destination dir or the optional sub dir (that will be created for you). Each board is put in a directory with its name and serial number.
 	-	**`--create`** create the destination dir if it does not exist.
+	-	**`--date`** use a time stamp as subdirectory name, or add to the supplied name.
 -	**`circup <options>`** calls circup with its `--path` option to each selected board and passes all other options and commands to it.
 -	**`get <key>`** print just the value for the key, for the selected devices. Can be used with backticks and such in a shell script. Includes special keys:
 	- **`pid`**, **`vid`**, **`sn`**: shortcuts for product_id, vendor_id and serial_num.

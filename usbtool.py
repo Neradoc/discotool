@@ -296,7 +296,7 @@ def eject(ctx):
 )
 @click.option(
 	"--date", "-d",
-	is_flag=True, help="Create a sub directory based on a timestamp."
+	is_flag=True, help="Use a time stamp as subdirectory name, or add to the supplied name."
 )
 @click.argument(
 	"sub_dir",
