@@ -28,7 +28,7 @@ Python modules required: `python3 -m pip install pyserial psutil click` and `pyu
 Define environment variables to override the default command line tools used by discotool. They are called by appending the relevant parameters at the end.
 - `DISCOTOOL_SERIALTOOL` (`screen`) command to connect to the REPL (tio, picocom, etc.)
 - `DISCOTOOL_CIRCUP` (`circup`) command to call circup (`pip install` it for the default)
-- `DISCOTOOL_NOCOLOR` disables colors in the output is it evaluates to True
+- `DISCOTOOL_NOCOLOR` disables colors in the output if it evaluates to True
 
 ### Command line options
 
@@ -70,14 +70,12 @@ Filters select boards from the list of devices found to run a command on them. T
 #### Examples:
 
 `discotool`
-![discotool list](docs/list_clue_qt_s2.png)
+![discotool list](docs/list_clue_ttgo_tiny.png)
 
-`discotool -n clue`  
-(using `tio`)
+`DISCOTOOL_SERIALTOOL=tio discotool -n clue`
 ![discotool repl](docs/repl_to_clue.png)
 
 `discotool -n clue circup update`
-![discotool circup](docs/circup_to_clue.png)
-
+![discotool circup](docs/circup_update_clue.png)
 
 [Samples of what output you can expect from some boards.](docs/examples.md)

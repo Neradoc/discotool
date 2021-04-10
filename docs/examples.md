@@ -133,7 +133,7 @@ Huzzah 32
 	/dev/cu.usbmodem7CDFA103B6741
 	/Volumes/FEATHERS2 v6.1.0-rc.0
 ```
-##### Ejecting drives
+##### Ejecting drives (Mac only for now)
 ```
 - EJECTING DRIVES -------------------------------------------------------
 Ejecting: FEATHERS2
