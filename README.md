@@ -32,11 +32,14 @@ It currently runs on MacOS, Linux and Windows. Look at the requirements files to
 
 ## usbtool.py use
 
-### Basic use
+### Install and use
 
-The tool is called by calling python on the repository directory `python3 discotool` or `py.exe discotool`. Making it pip-installable will happen some day, promise ! You can create a command alias called `discotool`.
+The `discotool` command line program can be installed with pip (calling it on the repository directory). You can also import the module directly `python3 import -m discotool`.
+```
+python3 -m pip install neradoc-discotool
+```
 
-When using a single board, it will be automatically selected for commands, this is the commands I use the most:
+When using a single board, it will be automatically selected for commands, these are the commands I use the most:
 - **`discotool repl`** to connect to the REPL.
 - **`discotool install ...`** to install modules via circup.
 - **`discotool update`** to update modules via circup.
