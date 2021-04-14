@@ -68,14 +68,13 @@ def readSysProfile(profile,devices,allMounts):
 		curDevice['manufacturer'] = manufacturer
 		# try to guess the port using the Location ID or Serial Number
 		ttys = []
-		for num_port,port in enumerate(remainingPorts):
-			port = remainingPorts[num_port]
+		for port in list(remainingPorts):
 			# has SN, match it with the serial ports
 			if port.vid == vid and port.pid == pid \
 				and serial_num != "" and port.serial_number == serial_num:
 				iface = port.interface or ""
 				ttys.append({'dev':port.device,'iface':iface})
-				remainingPorts[num_port] = None
+				remainingPorts.remove(port)
 			# no SN, use location ID with standard mac paths
 			elif serial_num == "":
 				location = subGroup['location_id'][2:].split()[0]
@@ -83,8 +82,7 @@ def readSysProfile(profile,devices,allMounts):
 					if port.device.startswith(locationStr+location):
 						iface = port.interface or ""
 						ttys.append({'dev':port.device,'iface':iface})
-						remainingPorts[num_port] = None
-		remainingPorts = list(filter(lambda x:  x is not None, remainingPorts))
+						remainingPorts.remove(port)
 		curDevice['ports'] = ttys
 		#
 		# now we select all the ones with a known VID or with an existing tty

@@ -51,13 +51,12 @@ def getDeviceList():
 				tty = child.get("DEVNAME")
 				if tty != None:
 					found = False
-					for x,port in enumerate(remainingPorts):
+					for port in list(remainingPorts):
 						if tty == port.device:
 							iface = port.interface or ""
 							ttys.append({'dev':port.device,'iface':iface})
-							remainingPorts[x] = None
+							remainingPorts.remove(port)
 							found = True
-					remainingPorts = [port for port in remainingPorts if port != None]
 					if not found:
 						ttys.append({'dev':tty,'iface':""})
 			if child.device_type == 'partition':
