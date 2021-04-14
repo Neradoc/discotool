@@ -11,9 +11,6 @@ import sys
 import time
 from . import usbinfos
 
-__version__ = "0.0.0-auto.0"
-__repo__ = "https://github.com/Neradoc/discotool.git"
-
 conf = {
 	# command line to connect to the REPL (screen, tio)
 	"DISCOTOOL_SERIALTOOL" : "screen",
