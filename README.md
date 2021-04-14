@@ -28,15 +28,15 @@ Device list:
 ```
 
 ## Operating system
-It currently runs on MacOS, Linux and Windows. Look at the requirements files to install the dependencies, with `pip install -r requirements.txt` for the right platform requirements.
+It currently runs on MacOS, Linux and Windows. The `requirements.txt` and `requirements-*.txt` files list the requirements per platform.
 
 ## usbtool.py use
 
 ### Install and use
 
-The `discotool` command line program can be installed with pip (calling it on the repository directory). You can also import the module directly `python3 import -m discotool`.
+The `discotool` command line program can be installed with pip. You can also import the module directly `python3 import -m /path/to/discotool`.
 ```
-python3 -m pip install neradoc-discotool
+python3 -m pip install discotool-for-microcontrollers
 ```
 
 When using a single board, it will be automatically selected for commands, these are the commands I use the most:
@@ -89,7 +89,7 @@ Filters select boards from the list of devices found to run a command on them. T
 -	**`json`** print the output of usbinfo as json for all selected boards.
 	- **`--pretty`**: pretty print it for human reading.
 
-## Examples:
+## Screenshots:
 
 `discotool`
 ![discotool list](docs/list_clue_ttgo_tiny.png)
