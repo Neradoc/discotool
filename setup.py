@@ -16,7 +16,7 @@ if os.path.exists(platform_req):
         required_modules += fp.read().split("\n")
 
 setuptools.setup(
-    name="neradoc-discotool",
+    name="discotool-for-microcontrollers",
     author="Neradoc",
     author_email="neraOnGit@ri1.fr",
     description="Discover, list, and use USB microcontoller boards.",
