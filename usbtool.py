@@ -29,10 +29,10 @@ for var in conf:
 	if var in os.environ:
 		conf[var] = os.environ[var]
 
-# string description of the circuitpython REPL serial port (startswith)
-SERIAL_PORT_REPL = "CircuitPython CDC "
-# string description of the circuitpython secondary serial port (startswith)
-SERIAL_PORT_CDC2 = "CircuitPython CDC2 "
+# string description of the circuitpython REPL serial port (regex)
+SERIAL_PORT_REPL = re.compile("^CircuitPython CDC .*", re.IGNORECASE)
+# string description of the circuitpython secondary serial port (regex)
+SERIAL_PORT_CDC2 = re.compile("^CircuitPython CDC2 .*", re.IGNORECASE)
 
 
 # click.echo/secho
@@ -67,9 +67,9 @@ def displayTheBoardsList(bList, ports=[]):
 		)
 		for portInfo in dev_ports:
 			iface = portInfo['iface']
-			if iface.startswith(SERIAL_PORT_REPL):
+			if SERIAL_PORT_REPL.match(iface):
 				iface = "REPL"
-			elif iface.startswith(SERIAL_PORT_CDC2):
+			elif SERIAL_PORT_CDC2.match(iface):
 				iface = "CDC2"
 			click.echo(f"\t{portInfo['dev']} ({iface})")
 		# volumes and main files
@@ -252,7 +252,7 @@ def repl(ctx):
 			port = device['ports'][0]
 		else:
 			potential_ports = [pp for pp in device['ports']
-						if pp['iface'].startswith(SERIAL_PORT_REPL)]
+				if SERIAL_PORT_REPL.match(pp['iface'])]
 			if len(potential_ports) == 0:
 				port = device['ports'][0]
 			else:
@@ -468,12 +468,12 @@ def get(ctx, key):
 			if 'ports' in device:
 				device['ports'].sort(key = lambda port: port['dev'])
 				values += [pp['dev'] for pp in device['ports']
-					if pp['iface'].startswith(SERIAL_PORT_REPL)]
-		elif key == "cdc":
+					if SERIAL_PORT_REPL.match(pp['iface'])]
+		elif key == "cdc" or key == "cdc2":
 			if 'ports' in device:
 				device['ports'].sort(key = lambda port: port['dev'])
 				values += [pp['dev'] for pp in device['ports']
-					if pp['iface'].startswith(SERIAL_PORT_CDC2)]
+					if SERIAL_PORT_CDC2.match(pp['iface'])]
 		elif key == "vid":
 			values.append(device['vendor_id'])
 		elif key == "pid":
