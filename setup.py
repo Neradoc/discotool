@@ -4,13 +4,13 @@ import sys
 
 here = os.path.abspath(os.path.dirname(__file__))
 
-with open(path.join(here,"README.md"), "r", encoding="utf-8") as fh:
+with open(os.path.join(here,"README.md"), "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
-with open(path.join(here,"requirements.txt"), "r", encoding="utf-8") as fp:
+with open(os.path.join(here,"requirements.txt"), "r", encoding="utf-8") as fp:
     required_modules = fp.read().split("\n")
 
-platform_req = path.join(here,f"requirements-{sys.platform}.txt")
+platform_req = os.path.join(here,f"requirements-{sys.platform}.txt")
 if os.path.exists(platform_req):
     with open(platform_req, "r", encoding="utf-8") as fp:
         required_modules += fp.read().split("\n")
