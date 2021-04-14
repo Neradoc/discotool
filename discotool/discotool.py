@@ -1,10 +1,18 @@
 #!/usr/bin/env python3
 
-import os, time, sys, re
-import subprocess, shutil, click
-from json import dumps
-import usbinfos
+import click
 from click_aliases import ClickAliasedGroup
+from json import dumps
+import os
+import re
+import shutil
+import subprocess
+import sys
+import time
+from . import usbinfos
+
+__version__ = "0.0.0-auto.0"
+__repo__ = "https://github.com/Neradoc/discotool.git"
 
 conf = {
 	# command line to connect to the REPL (screen, tio)
