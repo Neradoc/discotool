@@ -1,2 +1,2 @@
-import usbtool
-usbtool.main()
+from discotool import discotool
+discotool.main()
