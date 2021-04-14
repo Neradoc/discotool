@@ -2,7 +2,12 @@
 Module and tool to discover all boards connected to USB.
 
 ### usbinfos module
-Exposes the getDeviceList() function. Find boards on the host's USB bus and tries to match them with serial ports and mounted drives, virtual or not. When a drive is found, it lists circuitpython information if available: CPY version number and main files (code.py, etc.). Returns the list of boards found with their information, and a list of unmatched serial ports.
+Exposes the getDeviceList() function. Find boards on the host's USB bus and tries to match them with serial ports and mounted drives, virtual or not. When a drive is found, it lists circuitpython information if available: CPY version number and main files in order of priority (code.py, etc.). Returns the list of boards found with their information, and a list of unmatched serial ports.
+```python
+import usbinfos
+deviceList, remainingPorts = usbinfos.getDeviceList()
+```
+Device list:
 ```python
 [{
 	'manufacturer': 'Adafruit Industries LLC',
@@ -15,20 +20,33 @@ Exposes the getDeviceList() function. Find boards on the host's USB bus and trie
 	'serial_num': 'F88EE0399C0E1FC6',
 	'vendor_id': 9114,
 	'version': '6.0.1',
-	'volumes': [{'mains': ['code.py'], 'mount_point': '/Volumes/CPCLUE'}]
+	'volumes': [{
+		'mount_point': '/Volumes/CIRCUITPY'
+		'mains': ['code.py'],
+	}]
 }]
 ```
 
 ## Operating system
-It currently runs on macOS™ (Catalina) using a system tool, and on linux using udev.  
-Python modules required: `python3 -m pip install pyserial psutil click` and `pyudev` on linux.
+It currently runs on MacOS, Linux and Windows. Look at the requirements files to install the dependencies, with `pip install -r requirements.txt` for the right platform requirements.
 
 ## usbtool.py use
 
+### Basic use
+
+The tool is called by calling python on the repository directory `python3 discotool` or `py.exe discotool`. Making it pip-installable will happen some day, promise ! You can create a command alias called `discotool`.
+
+When using a single board, it will be automatically selected for commands, this is the commands I use the most:
+- **`discotool repl`** to connect to the REPL.
+- **`discotool install ...`** to install modules via circup.
+- **`discotool update`** to update modules via circup.
+
+### Configuration
+
 Define environment variables to override the default command line tools used by discotool. They are called by appending the relevant parameters at the end.
-- `DISCOTOOL_SERIALTOOL` (`screen`) command to connect to the REPL (tio, picocom, etc.)
-- `DISCOTOOL_CIRCUP` (`circup`) command to call circup (`pip install` it for the default)
-- `DISCOTOOL_NOCOLOR` disables colors in the output if it evaluates to True
+- **`DISCOTOOL_SERIALTOOL`** (`screen`/`PuTTY`) command to connect to the REPL (tio, picocom, etc.)
+- **`DISCOTOOL_CIRCUP`** (`circup`) command to call circup (`pip install` it for the default)
+- **`DISCOTOOL_NOCOLOR`** disables colors in the output if it evaluates to True
 
 ### Command line options
 
@@ -36,24 +54,24 @@ Define environment variables to override the default command line tools used by 
 - **`--nocolor`**: do not output colors in the terminal (overrides all else).
 - **`--color`**: output colors in the terminal (overrides all else).
 
-#### Filters
-Filters select boards from the list of devices found to run a command on them. They are combined with OR logic: anything that matches any filter is selected. All filters are NOT case sensitive. Filters are simple text matches, they don't support wildcards.
-
-- **`--auto`**: select the first board found. For when a single board is connected.
-- **`--name`**: search in the USB name/description field. Eg: "clue", "QT", "S2".
-- **`--serial`**: search the serial number of the board.
-- **`--mount`**: search the volume names of the board. Eg: "CIRCUITPY".
-
 #### No Command
 
 - if no filter is given, run the `list` command
 - if filters are given, run the `repl` command
 
+#### Filters
+Filters select boards from the list of devices found to run a command on them. They are combined with OR logic: anything that matches any filter is selected. All filters are NOT case sensitive. Filters are simple text matches, they don't support wildcards.
+
+- **`--auto`**: select the first board found.
+- **`--name`**: search in the USB name/description field. Eg: "clue", "QT", "S2".
+- **`--serial`**: search the serial number of the board.
+- **`--mount`**: search the volume names of the board. Eg: "CIRCUITPY".
+
 #### Commands
 
 -	**`list`** lists all the boards that have been detected, with name, manufacturer, serial number. Lists the serial ports and file volumes, identifying circuitpython code files present, as well as CPY version.
 -	**`repl`** connect to the REPL of the selected boards using the tool specified, screen by default, choosing the first serial port found if there is more than one.
--	**`eject`** eject all selected board drives, or all found if no filter given. (macOS only for now)
+-	**`eject`** eject all selected board drives, or all found if no filter given. (MacOS only for now)
 -	**`backup <destination dir> [<sub dir>]`** copy the content of the selected boards drives into the destination dir or the optional sub dir (that will be created for you). Each board is put in a directory with its name and serial number.
 	-	**`--create`** create the destination dir if it does not exist.
 	-	**`--date`** use a time stamp as subdirectory name, or add to the supplied name.
@@ -68,7 +86,7 @@ Filters select boards from the list of devices found to run a command on them. T
 -	**`json`** print the output of usbinfo as json for all selected boards.
 	- **`--pretty`**: pretty print it for human reading.
 
-#### Examples:
+## Examples:
 
 `discotool`
 ![discotool list](docs/list_clue_ttgo_tiny.png)
