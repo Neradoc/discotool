@@ -1,1 +1,0 @@
-from .usbinfos import getDeviceList
