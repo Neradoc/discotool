@@ -1,11 +1,30 @@
 import os
+import re
 import setuptools
+import subprocess
 import sys
 
 here = os.path.abspath(os.path.dirname(__file__))
 
+repository_name = "Neradoc/discotool"
+current_tag = subprocess.run("git describe --tags --abbrev=0",
+	capture_output = True,
+	encoding = "utf-8",
+	shell = True,
+).stdout.strip()
+
 with open(os.path.join(here,"README.md"), "r", encoding="utf-8") as fh:
     long_description = fh.read()
+    # long_description = long_description.split("## Screenshots")[0].strip()
+    
+    long_description = re.sub(r'\(docs/(.*.png)\)',
+        r'(https://raw.githubusercontent.com/' + repository_name
+        + '/' + current_tag + r'/docs/\1)',
+        long_description)
+    long_description = re.sub(r'\(docs/(.*.md)\)',
+        r'(https://github.com/' + repository_name
+        + '/blob/' + current_tag+r'/docs/\1)',
+        long_description)
 
 with open(os.path.join(here,"requirements.txt"), "r", encoding="utf-8") as fp:
     required_modules = fp.read().split("\n")
