@@ -13,39 +13,46 @@ from . import usbinfos
 
 conf = {
 	# command line to connect to the REPL (screen, tio)
-	"DISCOTOOL_SERIALTOOL" : "screen",
+	"SERIALTOOL" : "screen",
 	# command line to call circup
-	"DISCOTOOL_CIRCUP" : "circup",
+	"CIRCUP" : "circup",
 	# disable colors
-	"DISCOTOOL_NOCOLOR" : False,
+	"NOCOLOR" : False,
+	# separation line length
+	"LINE_LENGTH" : 0,
 }
 
+# click.echo/secho
+def echo(*text,nl=True,**kargs):
+	if bool(conf['NOCOLOR']):
+		click.echo(" ".join(text), nl=nl)
+	else:
+		click.secho(" ".join(text), nl=nl, **kargs)
+
+# command line conf
 try:
-	LINE_LENGTH = int(subprocess.check_output(["tput","cols"]))-1
+	conf['LINE_LENGTH'] = int(subprocess.check_output(["tput","cols"]))-1
 except:
-	LINE_LENGTH = 0
+	pass
 
 # windows versions
 if sys.platform == "win32":
-	conf['DISCOTOOL_SERIALTOOL'] = "putty -sercfg 115200 -serial"
+	conf['SERIALTOOL'] = "putty -sercfg 115200 -serial"
 
 # override configuration constants with environement variables
 for var in conf:
-	if var in os.environ:
-		conf[var] = os.environ[var]
+	environ_var = f"DISCOTOOL_{var}"
+	if environ_var in os.environ:
+		try:
+			conf[var] = type(conf[var])(os.environ[environ_var])
+		except ValueError:
+			echo("Environment variable value invalid: ", nl=False)
+			echo(f"{environ_var}={os.environ[environ_var]}", underline=True) 
 
 # string description of the circuitpython REPL serial port (regex)
 SERIAL_PORT_REPL = re.compile("^CircuitPython CDC .*", re.IGNORECASE)
 # string description of the circuitpython secondary serial port (regex)
 SERIAL_PORT_CDC2 = re.compile("^CircuitPython CDC2 .*", re.IGNORECASE)
-
-
-# click.echo/secho
-def echo(*text,nl=True,**kargs):
-	if bool(conf['DISCOTOOL_NOCOLOR']):
-		click.echo(" ".join(text), nl=nl)
-	else:
-		click.secho(" ".join(text), nl=nl, **kargs)
 
 
 # print the text from main
@@ -55,7 +62,7 @@ def displayTheBoardsList(bList, ports=[]):
 		return
 	for dev in bList:
 		# display the device name
-		echo(f"- {dev['name']} ".ljust(LINE_LENGTH,"-"), fg="yellow", bold=True)
+		echo(f"- {dev['name']} ".ljust(conf['LINE_LENGTH'],"-"), fg="yellow", bold=True)
 		# display tha manufacturer and serial number
 		if dev['manufacturer'] != "":
 			click.echo("\t"+dev['manufacturer'],nl=False)
@@ -92,7 +99,7 @@ def displayTheBoardsList(bList, ports=[]):
 				click.echo("")
 	# remaining serial ports not accounted for
 	if len(ports) > 0:
-		echo("-- Unknown Serial Ports ".ljust(LINE_LENGTH,"-"), bold=True)
+		echo("-- Unknown Serial Ports ".ljust(conf['LINE_LENGTH'],"-"), bold=True)
 		echo(" ".join([port.device for port in ports]))
 
 
@@ -176,9 +183,9 @@ def main(ctx, auto, wait, name, serial, mount, nocolor, color):
 	ctx.ensure_object(dict)
 	# no colors
 	if nocolor:
-		conf['DISCOTOOL_NOCOLOR'] = True
+		conf['NOCOLOR'] = True
 	if color:
-		conf['DISCOTOOL_NOCOLOR'] = False
+		conf['NOCOLOR'] = False
 	# normalize the inputs
 	name = name.lower().strip()
 	serial = serial.lower().strip()
@@ -263,8 +270,8 @@ def repl(ctx):
 			else:
 				port = potential_ports[0]
 		#
-		command = [conf['DISCOTOOL_SERIALTOOL'], port['dev']]
-		echo(f"- Connecting to {name} ".ljust(LINE_LENGTH,"-"), fg="cyan", bold=True)
+		command = [conf['SERIALTOOL'], port['dev']]
+		echo(f"- Connecting to {name} ".ljust(conf['LINE_LENGTH'],"-"), fg="cyan", bold=True)
 		echo("> "+" ".join(command), fg="cyan", bold=True)
 		subprocess.run(" ".join(command), shell=True)
 		echo("Fin.")
@@ -280,7 +287,7 @@ def eject(ctx):
 	if len(selectedDevices) == 0:
 		echo("No device selected.", fg="magenta")
 	else:
-		echo("- EJECTING DRIVES ".ljust(LINE_LENGTH,"-"), fg="magenta", bold=True)
+		echo("- EJECTING DRIVES ".ljust(conf['LINE_LENGTH'],"-"), fg="magenta", bold=True)
 		for device in selectedDevices:
 			for volume in device['volumes']:
 				if sys.platform == "darwin":
@@ -336,7 +343,7 @@ def backup(ctx, backup_dir, create, date, sub_dir):
 	if len(selectedDevices) == 0:
 		echo("No device selected", fg="magenta")
 	else:
-		echo("- BACKING UP ".ljust(LINE_LENGTH,"-"), fg="green", bold=True)
+		echo("- BACKING UP ".ljust(conf['LINE_LENGTH'],"-"), fg="green", bold=True)
 		for device in selectedDevices:
 			for volume in device['volumes']:
 				volume_src = volume['mount_point']
@@ -367,9 +374,9 @@ def circup(ctx, circup_options):
 			volume_bootout = os.path.join(volume_src,"boot_out.txt")
 			# only circup circuitpython boards
 			if os.path.exists(volume_src) and os.path.exists(volume_bootout):
-				command = [conf['DISCOTOOL_CIRCUP'], "--path", volume_src]
+				command = [conf['CIRCUP'], "--path", volume_src]
 				command += [x for x in circup_options]
-				echo(f"- Running circup on {name} ".ljust(LINE_LENGTH,"-"), fg="cyan", bold=True)
+				echo(f"- Running circup on {name} ".ljust(conf['LINE_LENGTH'],"-"), fg="cyan", bold=True)
 				echo("> ", bold=True, nl=False)
 				click.echo(" ".join(command))
 				subprocess.run(" ".join(command), shell=True)
@@ -418,7 +425,7 @@ def cleanup(ctx, yes):
 	if len(selectedDevices) == 0:
 		echo("No device selected", fg="magenta")
 	else:
-		echo("- CLEANING FILES ".ljust(LINE_LENGTH,"-"), fg="green", bold=True)
+		echo("- CLEANING FILES ".ljust(conf['LINE_LENGTH'],"-"), fg="green", bold=True)
 		for device in selectedDevices:
 			for volume in device['volumes']:
 				try:
