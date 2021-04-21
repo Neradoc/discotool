@@ -1,6 +1,6 @@
 import discotool
 
-deviceList,remainingPorts = discotool.list_devices()
+deviceList,remainingPorts = discotool.get_devices_list()
 print(deviceList)
 
 discotool.addCircuitpythonInfo(deviceList)

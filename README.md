@@ -1,11 +1,11 @@
-## USB Infos / Disco Tool
+## DiscoTool
 Module and tool to discover all boards connected to USB.
 
-### usbinfos module
-Exposes the getDeviceList() function. Find boards on the host's USB bus and tries to match them with serial ports and mounted drives, virtual or not. When a drive is found, it lists circuitpython information if available: CPY version number and main files in order of priority (code.py, etc.). Returns the list of boards found with their information, and a list of unmatched serial ports.
+### Module
+Exposes the `get_devices_list()` function. Find boards on the host's USB bus and tries to match them with serial ports and mounted drives, virtual or not. When a drive is found, it lists circuitpython information if available: CPY version number and main files in order of priority (code.py, etc.). Returns the list of boards found with their information, and a list of unmatched serial ports.
 ```python
-import usbinfos
-deviceList, remainingPorts = usbinfos.getDeviceList()
+import discotool
+deviceList, remainingPorts = discotool.get_devices_list()
 ```
 Device list:
 ```python
@@ -30,7 +30,7 @@ Device list:
 ## Operating system
 It currently runs on MacOS, Linux and Windows. The `requirements.txt` and `requirements-*.txt` files list the requirements per platform.
 
-## usbtool.py use
+## discotool CLI tool
 
 ### Install and use
 

@@ -219,7 +219,7 @@ def main(ctx, auto, wait, name, serial, mount, nocolor, color, serialtool, circu
 	noCriteria = (serial=="" and name=="" and mount=="" and not auto)
 	ctx.obj["noCriteria"] = noCriteria
 	# compute the data
-	deviceList, remainingPorts = usbinfos.getDeviceList()
+	deviceList, remainingPorts = usbinfos.get_devices_list()
 	#
 	# wait until the device pops up
 	if wait:
@@ -237,7 +237,7 @@ def main(ctx, auto, wait, name, serial, mount, nocolor, color, serialtool, circu
 					# loop slowly
 					time.sleep(1)
 					# re scan the device
-					deviceList, remainingPorts = usbinfos.getDeviceList()
+					deviceList, remainingPorts = usbinfos.get_devices_list()
 				else:
 					ctx.obj["deviceList"] = deviceList
 					ctx.obj["remainingPorts"] = remainingPorts

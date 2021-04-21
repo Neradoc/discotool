@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
 
+"""
+We call a system command (system_profiler) to list USB devices. At least it outputs json. We find the serial ports by comparing vid, pid and serial number or location_id with the information from pyserial.
+
+Virtual drives that don't appear by name in  SPSUSBDataType are found through psutil.disk_partitions() and their bsd_name.
+
+We find the microbits volumes by matching the serial number on the volume with the one in the USB. Otherwise the volume does not seem to be listed in system_profiler.
+"""
+
 import os, json, sys
 import subprocess
 import psutil
@@ -11,21 +19,6 @@ from .usbinfos_common import *
 # NOTE: we don't check for /dev/tty.usbmodem<serial_num>
 #       because devices with serial numbers are found differently
 SERIAL_PREFIXES = ["/dev/cu.usbmodem","/dev/cu.usbserial-"]
-
-# list the drive info for a circuipython drive (code or main and version)
-def get_cp_drive_info(mount):
-	mains = []
-	for mainFile in mainNames:
-		if os.path.exists(os.path.join(mount,mainFile)):
-			mains += [mainFile]
-	boot_out = os.path.join(mount, "boot_out.txt")
-	try:
-		with open(boot_out) as boot:
-			circuit_python, _ = boot.read().split(";")
-			version = circuit_python.split(" ")[-3]
-	except (FileNotFoundError,ValueError,IndexError):
-		version = ""
-	return (mains,version)
 
 # going recursively through all the devices
 # extracting the important informations
@@ -121,7 +114,7 @@ def readSysProfile(profile,devices,allMounts):
 		devices += [curDevice]
 	return devices
 
-def getDeviceList():
+def get_devices_list():
 	global remainingPorts
 	# system_profiler -json SPUSBDataType
 	ses = subprocess.check_output(["system_profiler","-json","SPUSBDataType"], stderr=subprocess.DEVNULL)

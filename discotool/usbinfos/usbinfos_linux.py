@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+"""
+Use pyudev and traverse the USB hierarchy of USB devices, removing the parent ones that can be identified as hubs.
+"""
+
 import os, json, sys
 import subprocess
 import psutil
@@ -7,22 +11,7 @@ import pyudev
 from serial.tools.list_ports import comports
 from .usbinfos_common import *
 
-# list the drive info for a circuipython drive (code or main and version)
-def get_cp_drive_info(mount):
-	mains = []
-	for mainFile in mainNames:
-		if os.path.exists(os.path.join(mount,mainFile)):
-			mains += [mainFile]
-	boot_out = os.path.join(mount, "boot_out.txt")
-	try:
-		with open(boot_out) as boot:
-			circuit_python, _ = boot.read().split(";")
-			version = circuit_python.split(" ")[-3]
-	except (FileNotFoundError,ValueError,IndexError):
-		version = ""
-	return (mains,version)
-
-def getDeviceList():
+def get_devices_list():
 	# get drives by mountpoint
 	allMounts = {}
 	for part in psutil.disk_partitions():
@@ -32,7 +21,7 @@ def getDeviceList():
 	deviceList = []
 	
 	context = pyudev.Context()
-	devices = context.list_devices(subsystem='usb', DEVTYPE='usb_device')
+	devices = context.get_devices_list(subsystem='usb', DEVTYPE='usb_device')
 	for device in devices:
 		curDevice = {}
 		deviceVolumes = []

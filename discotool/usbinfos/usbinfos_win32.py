@@ -6,21 +6,6 @@ import wmi
 from .pyserial_list_ports_windows import comports
 from .usbinfos_common import *
 
-# list the drive info for a circuipython drive (code or main and version)
-def get_cp_drive_info(mount):
-	mains = []
-	for mainFile in mainNames:
-		if os.path.exists(os.path.join(mount,mainFile)):
-			mains += [mainFile]
-	boot_out = os.path.join(mount, "boot_out.txt")
-	try:
-		with open(boot_out) as boot:
-			circuit_python, _ = boot.read().split(";")
-			version = circuit_python.split(" ")[-3]
-	except (FileNotFoundError,ValueError,IndexError):
-		version = ""
-	return (mains,version)
-
 def filter_port_description(description):
 	m = re.match(".*%(.+)%.*", description)
 	if m:
@@ -29,7 +14,7 @@ def filter_port_description(description):
 		name = description
 	return name.replace("_"," ").title()
 
-def getDeviceList():
+def get_devices_list():
 	remainingPorts = [x for x in comports() if x.vid is not None]
 	deviceList = []
 
