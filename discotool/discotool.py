@@ -49,10 +49,17 @@ for var in conf:
 			echo("Environment variable value invalid: ", nl=False)
 			echo(f"{environ_var}={os.environ[environ_var]}", underline=True) 
 
-# string description of the circuitpython REPL serial port (regex)
-SERIAL_PORT_REPL = re.compile("^CircuitPython CDC .*", re.IGNORECASE)
-# string description of the circuitpython secondary serial port (regex)
-SERIAL_PORT_CDC2 = re.compile("^CircuitPython CDC2 .*", re.IGNORECASE)
+# string description of the circuitpython REPL and secondary serial port
+# generic, stringcar_m0_express, winterbloom_sol
+SERIAL_NAMES = ["CircuitPython","StringCarM0Ex","Sol"]
+EXT_REPL = " CDC "
+EXT_CDC2 = " CDC2 "
+
+def IS_REPL(iface):
+	return any([(n + EXT_REPL).lower() in iface.lower() for n in SERIAL_NAMES])
+
+def IS_CDC2(iface):
+	return any([(n + EXT_CDC2).lower() in iface.lower() for n in SERIAL_NAMES])
 
 
 # print the text from main
@@ -79,9 +86,9 @@ def displayTheBoardsList(bList, ports=[]):
 		)
 		for portInfo in dev_ports:
 			iface = portInfo['iface']
-			if SERIAL_PORT_REPL.match(iface):
+			if IS_REPL(iface):
 				iface = "REPL"
-			elif SERIAL_PORT_CDC2.match(iface):
+			elif IS_CDC2(iface):
 				iface = "CDC2"
 			click.echo(f"\t{portInfo['dev']} ({iface})")
 		# volumes and main files
@@ -282,7 +289,7 @@ def repl(ctx):
 			port = device['ports'][0]
 		else:
 			potential_ports = [pp for pp in device['ports']
-				if SERIAL_PORT_REPL.match(pp['iface'])]
+				if IS_REPL(pp['iface'])]
 			if len(potential_ports) == 0:
 				port = device['ports'][0]
 			else:
@@ -498,12 +505,12 @@ def get(ctx, key):
 			if 'ports' in device:
 				device['ports'].sort(key = lambda port: port['dev'])
 				values += [pp['dev'] for pp in device['ports']
-					if SERIAL_PORT_REPL.match(pp['iface'])]
+					if IS_REPL(pp['iface'])]
 		elif key == "cdc" or key == "cdc2":
 			if 'ports' in device:
 				device['ports'].sort(key = lambda port: port['dev'])
 				values += [pp['dev'] for pp in device['ports']
-					if SERIAL_PORT_CDC2.match(pp['iface'])]
+					if IS_CDC2(pp['iface'])]
 		elif key == "vid":
 			values.append(device['vendor_id'])
 		elif key == "pid":
