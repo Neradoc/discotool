@@ -176,11 +176,29 @@ def tree_clean(root, force=False):
 )
 @click.option(
 	"--color",
-	is_flag=True, help="Enable colors in the terminal."
+	is_flag=True, help="Enable colors in the terminal. Overrides the env variable DISCOTOOL_NOCOLOR to force colors."
+)
+@click.option(
+	"--serialtool",
+	default="",
+	help="Command to call to access the REPL, overrides the default, and the DISCOTOOL_SERIALTOOL env variable. Default: screen or putty.exe."
+)
+@click.option(
+	"--circuptool",
+	default="",
+	help="Command to call circup, overrides the default and the DISCOTOOL_CIRCUP env variable. Default is just circup."
 )
 @click.pass_context
-def main(ctx, auto, wait, name, serial, mount, nocolor, color):
+def main(ctx, auto, wait, name, serial, mount, nocolor, color, serialtool, circuptool):
+	"""
+	discotool, the discovery tool for USB microcontroller boards.
+	"""
 	ctx.ensure_object(dict)
+	# overrides
+	if serialtool:
+		conf['SERIALTOOL'] = serialtool
+	if circuptool:
+		conf['CIRCUP'] = circuptool
 	# no colors
 	if nocolor:
 		conf['NOCOLOR'] = True
