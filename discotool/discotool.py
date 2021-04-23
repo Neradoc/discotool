@@ -379,7 +379,7 @@ def backup(ctx, backup_dir, create, date, sub_dir):
 					container_name += "_SN"+device['serial_num']
 					container = os.path.join(targetDir, container_name)
 					click.echo(f"Backing up {volume_src} to\n{container}")
-					shutil.copytree(volume_src, container, dirs_exist_ok = True)
+					shutil.copytree(volume_src, container) # dirs_exist_ok = True
 				else:
 					echo(f"{volume_src} is not a circuitpython board !", fg="red")
 
