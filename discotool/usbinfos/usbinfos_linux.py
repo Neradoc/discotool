@@ -21,7 +21,7 @@ def get_devices_list():
 	deviceList = []
 	
 	context = pyudev.Context()
-	devices = context.get_devices_list(subsystem='usb', DEVTYPE='usb_device')
+	devices = context.list_devices(subsystem='usb', DEVTYPE='usb_device')
 	for device in devices:
 		curDevice = {}
 		deviceVolumes = []
