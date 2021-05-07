@@ -87,4 +87,5 @@ def get_devices_list():
 		curDevice['manufacturer'] = manufacturer
 		deviceList.append(curDevice)
 	#
-	return (deviceList,remainingPorts)
+	rp = [port.device for port in remainingPorts]
+	return (deviceList,rp)

@@ -82,4 +82,5 @@ def get_devices_list():
 	#
 	for i in range(len(deviceList)):
 		del deviceList[i]['devpath']
-	return (deviceList,remainingPorts)
+	rp = [port.device for port in remainingPorts]
+	return (deviceList,rp)

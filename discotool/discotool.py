@@ -107,7 +107,7 @@ def displayTheBoardsList(bList, ports=[]):
 	# remaining serial ports not accounted for
 	if len(ports) > 0:
 		echo("-- Unknown Serial Ports ".ljust(conf['LINE_LENGTH'],"-"), bold=True)
-		echo(" ".join([port.device for port in ports]))
+		echo(" ".join(ports))
 
 
 # interpret the arguments and select devices based on that
