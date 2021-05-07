@@ -26,6 +26,6 @@ rm -rf "$TEMP_DIR"/dist/
 
 python3 .building/build_help.py update
 python3 -m build
-python3 -m twine upload dist/*
+python3 -m twine upload --username __token__ dist/*
 
 #cp "$temp_file" "$version_file"
