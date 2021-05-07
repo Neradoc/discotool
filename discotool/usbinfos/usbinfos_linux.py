@@ -23,19 +23,28 @@ def get_devices_list():
 	context = pyudev.Context()
 	devices = context.list_devices(subsystem='usb', DEVTYPE='usb_device')
 	for device in devices:
-		curDevice = {}
-		deviceVolumes = []
 		# skip devices that have a base class of 09 (hubs)
 		if device.properties['TYPE'].split("/")[0] == "9":
 			continue
-		name = device.get('ID_MODEL')
-		vid = int(device.get('ID_VENDOR_ID'),16)
-		SN = device.get('ID_SERIAL_SHORT','')
+		# gather information on the device
+		try:
+			vid = int(device.get('ID_VENDOR_ID'),16)
+		except ValueError:
+			vid = 0
+		try:
+			pid = int(device.get('ID_MODEL_ID'),16)
+		except ValueError:
+			pid = 0
 		devpath = device.get('DEVPATH')
+		manufacturer = device.get('ID_VENDOR','')
+		name = device.get('ID_MODEL')
+		SN = device.get('ID_SERIAL_SHORT','')
+		# gather information from the device's subsystems
+		deviceVolumes = []
 		ttys = []
 		version = ""
-		#for ki in device.properties: print(ki,device.properties[ki])
 		for child in device.children:
+			# serial port(s)
 			if child.subsystem == "tty":
 				tty = child.get("DEVNAME")
 				if tty != None:
@@ -43,11 +52,15 @@ def get_devices_list():
 					for port in list(remainingPorts):
 						if tty == port.device:
 							iface = port.interface or ""
+							name = port.product or name
+							manufacturer = port.manufacturer or manufacturer
+							#
 							ttys.append({'dev':port.device,'iface':iface})
 							remainingPorts.remove(port)
 							found = True
 					if not found:
 						ttys.append({'dev':tty,'iface':""})
+			# mouted drive(s)
 			if child.device_type == 'partition':
 				# volumeName = child.get('ID_FS_LABEL', '')
 				node = child.get('DEVNAME','')
@@ -69,15 +82,16 @@ def get_devices_list():
 		#
 		if vid not in VIDS and len(ttys) == 0: continue
 		#
+		curDevice = {}
 		curDevice['version'] = version
 		curDevice['devpath'] = devpath
 		curDevice['volumes'] = deviceVolumes
 		curDevice['name'] = name
 		curDevice['vendor_id'] = vid
-		curDevice['product_id'] = int(device.get('ID_MODEL_ID'),16)
+		curDevice['product_id'] = pid
 		curDevice['serial_num'] = SN
 		curDevice['ports'] = ttys
-		curDevice['manufacturer'] = device.get('ID_VENDOR','')
+		curDevice['manufacturer'] = manufacturer
 		deviceList.append(curDevice)
 	#
 	for i in range(len(deviceList)):
