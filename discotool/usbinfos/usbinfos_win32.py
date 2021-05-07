@@ -49,7 +49,7 @@ def get_devices_list():
 		vid = "0"
 		pid = "0"
 		manufacturer = ""
-		for x,port in enumerate(remainingPorts):
+		for port in list(remainingPorts):
 			if port.serial_number == SN:
 				vid = port.vid
 				pid = port.pid
@@ -57,9 +57,7 @@ def get_devices_list():
 				manufacturer = port.manufacturer
 				iface = port.interface or ""
 				ttys.append({'dev':port.device,'iface':iface})
-				remainingPorts[x] = None
-		
-		remainingPorts = [port for port in remainingPorts if port != None]
+				remainingPorts.remove(port)
 
 		if vid == "0": continue
 
