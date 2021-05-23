@@ -146,10 +146,13 @@ def tree_clean(root, force=False):
 	for target in os.listdir(root):
 		file = os.path.join(root,target)
 		if os.path.isdir(file):
-			tree_clean(file)
+			tree_clean(file, force)
 		else:
 			if os.path.basename(file).startswith("._"):
-				if force or click.confirm(f"Delete {file} ?"):
+				if force:
+					click.echo(f"Delete {file}")
+					os.remove(file)
+				elif click.confirm(f"Delete {file} ?"):
 					os.remove(file)
 
 
