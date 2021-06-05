@@ -286,7 +286,7 @@ def repl(ctx):
 	for device in selectedDevices:
 		name = device['name']
 		if len(device['ports']) == 0:
-			echo(f"No serial port found ({name})", fg="red")
+			# echo(f"No serial port found ({name})", fg="red")
 			continue
 		if len(device['ports']) == 1:
 			port = device['ports'][0]
