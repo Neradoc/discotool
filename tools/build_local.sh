@@ -13,7 +13,7 @@ rm -rf "$THIS_DIR"/dist/
 temp_file=`mktemp`
 cp "$version_file" "$temp_file"
 
-python3 .building/build_help.py update
+python3 tools/build_help.py update
 python3 -m build
 python3 -m twine upload dist/*
 
