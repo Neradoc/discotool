@@ -30,6 +30,6 @@ else:
 
 if __name__ == "__main__":
 	import pprint
-	deviceList,remainingPorts = get_devices_list()
+	deviceList,remainingPorts = get_devices_list(drive_info=True)
 	pprint.pprint(deviceList)
 	pprint.pprint(remainingPorts)

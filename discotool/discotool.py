@@ -198,8 +198,13 @@ def tree_clean(root, force=False):
 	default="",
 	help="Command to call circup, overrides the default and the DISCOTOOL_CIRCUP env variable. Default is just circup."
 )
+@click.option(
+	"--info", "-i",
+	is_flag=True,
+	help="Fetch more information. Can cause drive access and code reload on Circuitpython."
+)
 @click.pass_context
-def main(ctx, auto, wait, name, serial, mount, nocolor, color, serialtool, circuptool):
+def main(ctx, auto, wait, name, serial, mount, nocolor, color, serialtool, circuptool, info):
 	"""
 	discotool, the discovery tool for USB microcontroller boards.
 	"""
@@ -222,7 +227,7 @@ def main(ctx, auto, wait, name, serial, mount, nocolor, color, serialtool, circu
 	noCriteria = (serial=="" and name=="" and mount=="" and not auto)
 	ctx.obj["noCriteria"] = noCriteria
 	# compute the data
-	deviceList, remainingPorts = usbinfos.get_devices_list()
+	deviceList, remainingPorts = usbinfos.get_devices_list(drive_info=info)
 	#
 	# wait until the device pops up
 	if wait:

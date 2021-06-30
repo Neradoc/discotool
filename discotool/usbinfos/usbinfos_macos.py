@@ -23,12 +23,12 @@ SERIAL_PREFIXES = ["/dev/cu.usbmodem","/dev/cu.usbserial-"]
 # going recursively through all the devices
 # extracting the important informations
 # skipping the media infos and listing the volumes
-def readSysProfile(profile,devices,allMounts):
+def readSysProfile(profile,devices,allMounts,drive_info):
 	global remainingPorts
 	for subGroup in profile:
 		# go depth first
 		if "_items" in subGroup:
-			devices = readSysProfile(subGroup['_items'],devices,allMounts)
+			devices = readSysProfile(subGroup['_items'],devices,allMounts,drive_info)
 		subGroup['_items'] = None
 		# back to the device
 		curDevice = {}
@@ -88,6 +88,7 @@ def readSysProfile(profile,devices,allMounts):
 		# list the volume(s) and the circtuipython run files
 		deviceVolumes = []
 		version = ""
+		mains = []
 		if 'Media' in subGroup:
 			for media in subGroup['Media']:
 				if "volumes" in media:
@@ -95,7 +96,8 @@ def readSysProfile(profile,devices,allMounts):
 					for volume in media['volumes']:
 						if 'mount_point' in volume:
 							mount = volume['mount_point']
-							mains,version = get_cp_drive_info(mount)
+							if drive_info:
+								mains,version = get_cp_drive_info(mount)
 							deviceVolumes.append({
 								'mount_point': mount,
 								'mains': mains,
@@ -114,7 +116,7 @@ def readSysProfile(profile,devices,allMounts):
 		devices += [curDevice]
 	return devices
 
-def get_devices_list():
+def get_devices_list(drive_info=False):
 	global remainingPorts
 	# system_profiler -json SPUSBDataType
 	ses = subprocess.check_output(["system_profiler","-json","SPUSBDataType"], stderr=subprocess.DEVNULL)
@@ -129,6 +131,6 @@ def get_devices_list():
 		allMounts[part.device] = part.mountpoint
 	
 	# list the devices
-	deviceList = readSysProfile(system_profile['SPUSBDataType'], [], allMounts)
+	deviceList = readSysProfile(system_profile['SPUSBDataType'], [], allMounts, drive_info)
 	rp = [port.device for port in remainingPorts]
 	return (deviceList,rp)

@@ -11,7 +11,7 @@ import pyudev
 from serial.tools.list_ports import comports
 from .usbinfos_common import *
 
-def get_devices_list():
+def get_devices_list(drive_info=False):
 	# get drives by mountpoint
 	allMounts = {}
 	for part in psutil.disk_partitions():
@@ -43,6 +43,7 @@ def get_devices_list():
 		deviceVolumes = []
 		ttys = []
 		version = ""
+		mains = []
 		for child in device.children:
 			# serial port(s)
 			if child.subsystem == "tty":
@@ -66,7 +67,8 @@ def get_devices_list():
 				node = child.get('DEVNAME','')
 				if node in allMounts:
 					volume = allMounts[node]
-					mains,version = get_cp_drive_info(volume)
+					if drive_info:
+						mains,version = get_cp_drive_info(volume)
 					deviceVolumes.append({
 						'mount_point': volume,
 						'mains': mains,

@@ -14,7 +14,7 @@ def filter_port_description(description):
 		name = description
 	return name.replace("_"," ").title()
 
-def get_devices_list():
+def get_devices_list(drive_info=False):
 	remainingPorts = [x for x in comports() if x.vid is not None]
 	deviceList = []
 
@@ -62,6 +62,7 @@ def get_devices_list():
 		if vid == "0": continue
 
 		version = ""
+		mains = []
 		deviceVolumes = []
 		for mount in allMounts:
 			if mount["disk"].SerialNumber == device['serial_number']:
@@ -69,7 +70,8 @@ def get_devices_list():
 					name = mount["disk"].caption
 				for disk in mount["volumes"]:
 					volume = disk.DeviceID
-					mains,version = get_cp_drive_info(volume)
+					if drive_info:
+						mains,version = get_cp_drive_info(volume)
 					deviceVolumes.append({
 						'mount_point': volume+"\\",
 						'mains': mains,
