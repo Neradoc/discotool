@@ -509,12 +509,12 @@ def get(ctx, key):
 				device['ports'].sort(key = lambda port: port['dev'])
 				if len(device['ports']) > 0:
 					values.append(device['ports'][0]['dev'])
-		elif key == "repl":
+		elif key in ("repl", "console"):
 			if 'ports' in device:
 				device['ports'].sort(key = lambda port: port['dev'])
 				values += [pp['dev'] for pp in device['ports']
 					if IS_REPL(pp['iface'])]
-		elif key == "cdc" or key == "cdc2":
+		elif key in ("cdc", "cdc2", "data"):
 			if 'ports' in device:
 				device['ports'].sort(key = lambda port: port['dev'])
 				values += [pp['dev'] for pp in device['ports']
