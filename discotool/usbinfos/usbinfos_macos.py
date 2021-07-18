@@ -99,6 +99,7 @@ def readSysProfile(profile,devices,allMounts,drive_info):
 							if drive_info:
 								mains,version = get_cp_drive_info(mount)
 							deviceVolumes.append({
+								'name': volume['_name'],
 								'mount_point': mount,
 								'mains': mains,
 							})
@@ -106,8 +107,10 @@ def readSysProfile(profile,devices,allMounts,drive_info):
 					disk = os.path.join("/dev",media['bsd_name'])
 					if disk in allMounts:
 						mount = allMounts[disk]
-						mains,version = get_cp_drive_info(mount)
+						if drive_info:
+							mains,version = get_cp_drive_info(mount)
 						deviceVolumes.append({
+							'name': os.path.basename(mount),
 							'mount_point': mount,
 							'mains': mains,
 						})

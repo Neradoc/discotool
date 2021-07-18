@@ -55,10 +55,11 @@ class DeviceInfoDict(dict):
 		self.pid = self.product_id
 
 		self.drive = None
+		self.volume_name = ""
 		if self["volumes"]:
 			self.drive = self["volumes"][0]["mount_point"]
+			self.volume_name = self["volumes"][0]["name"]
 		self.volume = self.drive
-		self.volume_name = os.path.basename(self.volume)
 
 		self.data = None
 		self.repl = None

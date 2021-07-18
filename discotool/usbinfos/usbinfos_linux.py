@@ -70,6 +70,7 @@ def get_devices_list(drive_info=False):
 					if drive_info:
 						mains,version = get_cp_drive_info(volume)
 					deviceVolumes.append({
+						'name': os.path.basename(volume),
 						'mount_point': volume,
 						'mains': mains,
 					})

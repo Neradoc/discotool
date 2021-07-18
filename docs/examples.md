@@ -39,7 +39,7 @@
 	Arduino LLC
 	/dev/cu.usbmodem144443121
 ```
-##### Micro:Bit V2 has quotation marks in it's USB description for some reason
+##### Micro:Bit V2 has quotation marks in its USB description for some reason
 ```
 - "BBC micro:bit CMSIS-DAP" ---------------------------------------------
 	ARM [SN:9904360258994e45004b900e00000025000000009796990b]
@@ -133,7 +133,7 @@ Huzzah 32
 	/dev/cu.usbmodem7CDFA103B6741
 	/Volumes/FEATHERS2 v6.1.0-rc.0
 ```
-##### Ejecting drives (Mac only for now)
+##### Unmounting with `discotool eject` (Mac only for now)
 ```
 - EJECTING DRIVES -------------------------------------------------------
 Ejecting: FEATHERS2

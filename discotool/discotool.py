@@ -89,7 +89,7 @@ def displayTheBoardsList(bList, ports=[]):
 			if IS_REPL(iface):
 				iface = "REPL"
 			elif IS_CDC2(iface):
-				iface = "CDC2"
+				iface = "DATA"
 			click.echo(f"\t{portInfo['dev']} ({iface})")
 		# volumes and main files
 		dev_vols = sorted(
