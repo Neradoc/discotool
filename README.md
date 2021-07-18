@@ -21,8 +21,8 @@ When running `discotool` while using a single board, it will be automatically se
 
 ### Configuration
 
-Define environment variables to override the default command line tools used by discotool. They are called by appending the relevant parameters at the end of the command.
-- **`DISCOTOOL_SERIALTOOL`**: (`screen`/`PuTTY`) command to connect to the REPL (tio, picocom, etc.)
+Define environment variables to override the default command line tools used by discotool. They are called by appending the relevant parameters at the end of the command, or replacing a placeholder.
+- **`DISCOTOOL_SERIALTOOL`**: (`screen {port} 115200`/`PuTTY`) command to connect to the REPL (tio, picocom, etc.), adds the port at the end or replaces `{port}` if present.
 - **`DISCOTOOL_CIRCUP`**: (`circup`) command to call circup (`pip install` it for the default)
 - **`DISCOTOOL_NOCOLOR`**: disables colors in the output if it evaluates to True
 

@@ -13,7 +13,7 @@ from . import usbinfos
 
 conf = {
 	# command line to connect to the REPL (screen, tio)
-	"SERIALTOOL" : "screen",
+	"SERIALTOOL" : "screen {port} 115200",
 	# command line to call circup
 	"CIRCUP" : "circup",
 	# disable colors
@@ -37,7 +37,7 @@ except:
 
 # windows versions
 if sys.platform == "win32":
-	conf['SERIALTOOL'] = "putty -sercfg 115200 -serial"
+	conf['SERIALTOOL'] = "putty -sercfg 115200 -serial {port}"
 
 # override configuration constants with environement variables
 for var in conf:
@@ -303,10 +303,13 @@ def repl(ctx):
 			else:
 				port = potential_ports[0]
 		#
-		command = [conf['SERIALTOOL'], port['dev']]
+		if "{port}" in conf['SERIALTOOL']:
+			command = conf['SERIALTOOL'].format(port=port['dev'])
+		else:
+			command = conf['SERIALTOOL'] + " " + port['dev']
 		echo(f"- Connecting to {name} ".ljust(conf['LINE_LENGTH'],"-"), fg="cyan", bold=True)
-		echo("> "+" ".join(command), fg="cyan", bold=True)
-		subprocess.run(" ".join(command), shell=True)
+		echo("> "+command, fg="cyan", bold=True)
+		subprocess.run(command, shell=True)
 		echo("Fin.")
 
 
