@@ -99,6 +99,8 @@ def displayTheBoardsList(bList, ports=[]):
 		for volume in dev_vols:
 			if 'mount_point' in volume:
 				click.echo("\t"+volume['mount_point'],nl=False)
+				if volume['name'] not in volume['mount_point']:
+					click.echo(' "'+volume['name']+'"', nl=False)
 				for main in volume['mains']:
 					click.echo(" ("+main+")",nl=False)
 				if dev['version']:
@@ -134,8 +136,8 @@ def find_the_devices(deviceList, auto, wait, name, serial, mount):
 	if mount != "":
 		for device in deviceList:
 			for volume in device['volumes']:
-				if 'mount_point' in volume \
-					and volume['mount_point'].lower().find(mount) >= 0:
+				if 'name' in volume \
+					and volume['name'].lower().find(mount) >= 0:
 					if device not in selectedDevices:
 						selectedDevices.append(device)
 	return selectedDevices
