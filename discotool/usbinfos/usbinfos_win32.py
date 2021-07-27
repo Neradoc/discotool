@@ -19,7 +19,7 @@ def get_devices_list(drive_info=False):
 	deviceList = []
 
 	serialNumbers = [{"serial_number": x.serial_number} for x in remainingPorts]
-	
+
 	allMounts = []
 	wmi_info = wmi.WMI()
 	for physical_disk in wmi_info.Win32_DiskDrive ():
@@ -66,14 +66,17 @@ def get_devices_list(drive_info=False):
 		deviceVolumes = []
 		for mount in allMounts:
 			if mount["disk"].SerialNumber == device['serial_number']:
-				if name == "":
-					name = mount["disk"].caption
+				if mount["disk"].caption:
+					# guessing the Manufacturer is the first word (for now)
+					manufacturer = mount["disk"].caption.split(" ")[0] or manufacturer
+					# guessing it ends with "USB Device"
+					name = " ".join(mount["disk"].caption.split(" ")[1:-2]) or name
 				for disk in mount["volumes"]:
 					volume = disk.DeviceID
 					if drive_info:
 						mains,version = get_cp_drive_info(volume)
 					deviceVolumes.append({
-						'name': name,
+						'name': disk.VolumeName,
 						'mount_point': volume+"\\",
 						'mains': mains,
 					})
