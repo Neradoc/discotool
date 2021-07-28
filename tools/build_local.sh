@@ -1,20 +1,29 @@
-#!/bin/bash
-
 THIS_FILE=`realpath "$0"`
-temp=`dirname "$THIS_FILE"`
-THIS_DIR=`dirname "$temp"`
-version_file="$THIS_DIR"/discotool/__init__.py
+FILE_DIR=`dirname "$THIS_FILE"`
+REPO_DIR=`dirname "$FILE_DIR"`
 
-cd "$THIS_DIR"
-
-rm -rf "$THIS_DIR"/build/
-rm -rf "$THIS_DIR"/dist/
+echo THIS_FILE $THIS_FILE
+echo temp $temp
+echo REPO_DIR $REPO_DIR
 
 temp_file=`mktemp`
-cp "$version_file" "$temp_file"
+TEMP_DIR="${temp_file}_dir"
+mkdir "$TEMP_DIR"
 
-python3 tools/build_help.py update
+open "$TEMP_DIR"
+cd "$TEMP_DIR"
+
+git clone "$REPO_DIR" "$TEMP_DIR"
+version_file="$TEMP_DIR"/discotool/__init__.py
+
+rm -rf "$TEMP_DIR"/build/
+rm -rf "$TEMP_DIR"/dist/
+
+#temp_file=`mktemp`
+#cp "$version_file" "$temp_file"
+
+python3 "$REPO_DIR"/tools/build_help.py update
 python3 -m build
-python3 -m twine upload dist/*
+python3 -m twine upload --username __token__ -- dist/*
 
-cp "$temp_file" "$version_file"
+#cp "$temp_file" "$version_file"
