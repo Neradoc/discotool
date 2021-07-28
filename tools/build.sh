@@ -1,31 +1,42 @@
 #!/bin/bash
 
-THIS_FILE=`realpath "$0"`
-FILE_DIR=`dirname "$THIS_FILE"`
-REPO_DIR=`dirname "$FILE_DIR"`
+if [[ -z `command -v python3` ]]; then
+	alias python3=python
+fi
 
-echo THIS_FILE $THIS_FILE
-echo temp $temp
-echo REPO_DIR $REPO_DIR
+if [[ "--notemp" == "$1" ]]; then
+	python3 tools/build_help.py update
 
-temp_file=`mktemp`
-TEMP_DIR="${temp_file}_dir"
-mkdir "$TEMP_DIR"
+	python3 -m build
+	python3 -m twine upload --username __token__ dist/*
+else
+	THIS_FILE=`realpath "$0"`
+	FILE_DIR=`dirname "$THIS_FILE"`
+	REPO_DIR=`dirname "$FILE_DIR"`
 
-open "$TEMP_DIR"
-cd "$TEMP_DIR"
+	echo THIS_FILE $THIS_FILE
+	echo temp $temp
+	echo REPO_DIR $REPO_DIR
 
-git clone "$REPO_DIR" "$TEMP_DIR"
-version_file="$TEMP_DIR"/discotool/__init__.py
+	temp_file=`mktemp`
+	TEMP_DIR="${temp_file}_dir"
+	mkdir "$TEMP_DIR"
 
-rm -rf "$TEMP_DIR"/build/
-rm -rf "$TEMP_DIR"/dist/
+	open "$TEMP_DIR"
+	cd "$TEMP_DIR"
 
-#temp_file=`mktemp`
-#cp "$version_file" "$temp_file"
+	git clone "$REPO_DIR" "$TEMP_DIR"
+	version_file="$TEMP_DIR"/discotool/__init__.py
 
-python3 "$REPO_DIR"/tools/build_help.py update
-python3 -m build
-python3 -m twine upload --username __token__ dist/*
+	rm -rf "$TEMP_DIR"/build/
+	rm -rf "$TEMP_DIR"/dist/
 
-#cp "$temp_file" "$version_file"
+	#temp_file=`mktemp`
+	#cp "$version_file" "$temp_file"
+
+	python3 "$REPO_DIR"/tools/build_help.py update
+	python3 -m build
+	python3 -m twine upload --username __token__ -- dist/*
+
+	#cp "$temp_file" "$version_file"
+fi
