@@ -26,15 +26,14 @@ def get_devices_list(drive_info=False):
 		if physical_disk.InterfaceType != "USB": continue
 		volumes = []
 		manufacturer, product = "", ""
-		# last element of the PNP "path" or something
-		pnp_id = physical_disk.PNPDeviceID.split("\\")[-1]
+		pnp_id = physical_disk.PNPDeviceID.replace("\\","#")
 		for partition in physical_disk.associators ("Win32_DiskDriveToDiskPartition"):
 			for logical_disk in partition.associators ("Win32_LogicalDiskToPartition"):
 				if logical_disk.DriveType == 2: # removable
 					volumes.append(logical_disk)
 					# try to find info from related "windows portable drive" entity
 					for ppi in wmi_info.Win32_PnPEntity(pnpclass="WPD"):
-						if f"#{pnp_id}#" in ppi.PNPDeviceID:
+						if pnp_id in ppi.PNPDeviceID:
 							manufacturer = ppi.manufacturer or manufacturer
 							product = ppi.description or product
 		# default information from the caption
