@@ -26,9 +26,9 @@ jobs:
       if: contains(steps.need-pypi.outputs.setup-py, 'setup.py')
       run: |
         python -m pip install --upgrade pip
-        pip install setuptools wheel twine build
+        pip install -U setuptools wheel twine
     - name: Build and publish
       env:
         TWINE_PASSWORD: ${{ secrets.PYPI_UPLOAD_TOKEN }}
       run: |
-        bash tools/build.sh --notemp
+        bash tools/build.sh
