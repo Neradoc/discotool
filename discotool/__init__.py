@@ -7,4 +7,7 @@ from .usbinfos import (
 	devices_by_serial,
 )
 
-__version__ = "0.0.0-auto.0"
+try:
+	from ._version import version as __version__
+except:
+	__version__ = "0.0.0-auto.0"

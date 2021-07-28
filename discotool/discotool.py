@@ -554,3 +554,9 @@ def json(ctx,pretty):
 	if pretty: indent = 2
 	else: indent = None
 	click.echo(dumps(selectedDevices,indent=indent))
+
+
+@main.command()
+def version():
+	from . import __version__
+	print(__version__)
