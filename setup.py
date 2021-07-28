@@ -58,7 +58,9 @@ setuptools.setup(
     ],
     packages=setuptools.find_packages(where="."),
     python_requires=">=3.6",
-    use_scm_version=True,
+    use_scm_version={
+        'write_to': 'discotool/_version.py'
+    },
     setup_requires=["setuptools_scm"],
     install_requires=required_modules,
     entry_points={"console_scripts": ["discotool=discotool.discotool:main"]},

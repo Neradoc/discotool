@@ -5,3 +5,4 @@ __pycache__
 venv
 *.egg-info
 .egg
+discotool/_version.py
