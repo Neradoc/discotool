@@ -26,13 +26,24 @@ with open(os.path.join(here,"README.md"), "r", encoding="utf-8") as fh:
         + '/blob/' + current_tag+r'/docs/\1)',
         long_description)
 
-with open(os.path.join(here,"requirements.txt"), "r", encoding="utf-8") as fp:
-    required_modules = fp.read().split("\n")
+# with open(os.path.join(here,"requirements.txt"), "r", encoding="utf-8") as fp:
+#     required_modules = fp.read().split("\n")
+# 
+# platform_req = os.path.join(here,f"requirements-{sys.platform}.txt")
+# if os.path.exists(platform_req):
+#     with open(platform_req, "r", encoding="utf-8") as fp:
+#         required_modules += fp.read().split("\n")
+# required_modules = [mod for mod in required_modules if mod]
 
-platform_req = os.path.join(here,f"requirements-{sys.platform}.txt")
-if os.path.exists(platform_req):
-    with open(platform_req, "r", encoding="utf-8") as fp:
-        required_modules += fp.read().split("\n")
+required_modules = [
+    "click >= 7.1.2",
+    "click-aliases == 1.0.1",
+    "psutil >= 5.8.0",
+    "pyserial >= 3.4",
+    "wmi;platform_system=='Windows'",
+    "pywin32;platform_system=='Windows'",
+    "pyudev;platform_system=='Linux'",
+]
 
 setuptools.setup(
     name="discotool-for-microcontrollers",

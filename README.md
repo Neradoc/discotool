@@ -14,17 +14,24 @@ It currently runs on MacOS, Linux and Windows. The `requirements.txt` and `requi
 
 ## discotool CLI tool
 
-When running `discotool` while using a single board, it will be automatically selected for commands, these are the commands I use the most:
+When running `discotool` while using a single board, it will be automatically selected for commands. These are the commands I use the most:
 - **`discotool repl`**: to connect to the REPL.
 - **`discotool install ...`**: to install modules via circup.
 - **`discotool update`**: to update modules via circup.
 
+I often have more than one board connected, and connect to the REPL using `discotool -n pico` for example, or using the drive (mount) name to give each board a personnal name `discotool -m picotwo`.
+
+I also use a command to back up all connected boards.
+```
+alias cpbackups='discotool backup --date ~/Backups/CPBackups'
+```
+
 ### Configuration
 
 Define environment variables to override the default command line tools used by discotool. They are called by appending the relevant parameters at the end of the command, or replacing a placeholder.
-- **`DISCOTOOL_SERIALTOOL`**: (`screen {port} 115200`/`PuTTY`) command to connect to the REPL (tio, picocom, etc.), adds the port at the end or replaces `{port}` if present.
-- **`DISCOTOOL_CIRCUP`**: (`circup`) command to call circup (`pip install` it for the default)
-- **`DISCOTOOL_NOCOLOR`**: disables colors in the output if it evaluates to True
+- **`DISCOTOOL_SERIALTOOL`**: (`screen`/`PuTTY`) command to connect to the REPL (tio, picocom, etc.), adds the port at the end or replaces `{port}` if present.
+- **`DISCOTOOL_CIRCUP`**: (`circup`) command to call circup (`pip install` it for the default).
+- **`DISCOTOOL_NOCOLOR`**: disables colors in the output if it evaluates to True.
 
 ### Command line options
 
@@ -35,8 +42,8 @@ Define environment variables to override the default command line tools used by 
 
 #### No Command
 
-- if no filter is given, run the `list` command
-- if filters are given, run the `repl` command
+- if no filter is given, run the `list` command.
+- if filters are given, run the `repl` command.
 
 #### Filters
 Filters select boards from the list of devices found to run a command on them. They are combined with OR logic: anything that matches any filter is selected. All filters are NOT case sensitive. Filters are simple text matches, they don't support wildcards.
