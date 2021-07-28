@@ -19,17 +19,32 @@ def get_devices_list(drive_info=False):
 	deviceList = []
 
 	serialNumbers = [{"serial_number": x.serial_number} for x in remainingPorts]
-	
+
 	allMounts = []
 	wmi_info = wmi.WMI()
 	for physical_disk in wmi_info.Win32_DiskDrive ():
 		if physical_disk.InterfaceType != "USB": continue
 		volumes = []
+		manufacturer, product = "", ""
+		pnp_id = physical_disk.PNPDeviceID.replace("\\","#")
 		for partition in physical_disk.associators ("Win32_DiskDriveToDiskPartition"):
 			for logical_disk in partition.associators ("Win32_LogicalDiskToPartition"):
 				if logical_disk.DriveType == 2: # removable
 					volumes.append(logical_disk)
+					# try to find info from related "windows portable drive" entity
+					for ppi in wmi_info.Win32_PnPEntity(pnpclass="WPD"):
+						if pnp_id in ppi.PNPDeviceID:
+							manufacturer = ppi.manufacturer or manufacturer
+							product = ppi.description or product
+		# default information from the caption
+		if physical_disk.caption:
+			# guessing the Manufacturer is the first word
+			manufacturer = manufacturer or physical_disk.caption.split(" ")[0]
+			# guessing it ends with "USB Device"
+			product = product or " ".join(physical_disk.caption.split(" ")[1:-2])
 		allMounts.append({
+			"manufacturer": manufacturer.strip(),
+			"product": product.strip(),
 			"disk": physical_disk,
 			"volumes": volumes,
 		})
@@ -66,14 +81,16 @@ def get_devices_list(drive_info=False):
 		deviceVolumes = []
 		for mount in allMounts:
 			if mount["disk"].SerialNumber == device['serial_number']:
-				if name == "":
-					name = mount["disk"].caption
+				if mount["manufacturer"]:
+					manufacturer = mount["manufacturer"]
+				if mount["product"]:
+					name = mount["product"]
 				for disk in mount["volumes"]:
 					volume = disk.DeviceID
 					if drive_info:
 						mains,version = get_cp_drive_info(volume)
 					deviceVolumes.append({
-						'name': name,
+						'name': disk.VolumeName,
 						'mount_point': volume+"\\",
 						'mains': mains,
 					})
