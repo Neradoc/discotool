@@ -278,9 +278,8 @@ def list(ctx):
 	"""
 	List all the devices that have been detected.
 	"""
-	deviceList = ctx.obj["deviceList"]
-	remainingPorts = ctx.obj["remainingPorts"]
-	displayTheBoardsList(deviceList, remainingPorts)
+	selectedDevices = ctx.obj["selectedDevices"]
+	displayTheBoardsList(selectedDevices, [])
 
 
 @main.command()

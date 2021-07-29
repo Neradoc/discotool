@@ -48,7 +48,7 @@ Filters select boards from the list of devices found to run a command on them. T
 
 #### Commands
 
--	**`list`**: lists all the boards that have been detected, with name, manufacturer, serial number. Lists the serial ports and file volumes, identifying circuitpython code files present, as well as CPY version.
+-	**`list`**: lists the selected boards, with name, manufacturer, serial number. Lists the serial ports and file volumes. If the `--info` option was given, identifies circuitpython code files present, as well as CPY version. On windows the name of the drive is listed in addition to the drive letter.
 -	**`repl`**: connect to the REPL of the selected boards using the tool specified, screen by default, choosing the first serial port found if there is more than one.
 -	**`eject`**: eject all selected board drives, or all found if no filter given. (MacOS only for now)
 -	**`backup <destination dir> [<sub dir>]`**: copy the content of the selected boards drives into the destination dir or the optional sub dir (that will be created for you). Each board is put in a directory with its name and serial number.
