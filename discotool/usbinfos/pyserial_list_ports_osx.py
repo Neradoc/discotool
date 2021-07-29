@@ -4,16 +4,16 @@
 #
 # code originally from https://github.com/makerbot/pyserial/tree/master/serial/tools
 # with contributions from cibomahto, dgs3, FarMcKon, tedbrandston
-# and modifications by cliechti, hoihu, hardkrash
+# and modifications by cliechti, hoihu, hardkrash, Neradoc
 #
 # This file is part of pySerial. https://github.com/pyserial/pyserial
-# (C) 2013-2020
+# (C) 2013-2021
 #
 # SPDX-License-Identifier:    BSD-3-Clause
+# SPDX-FileCopyrightText: (C) 2021
 
-# This version fixes the "USB Interface Name" for macosx.
-# It also lists the dialin devices instead of callout (tty.* versus cu.*)
-# Also tabs.
+
+# List all of the callout devices in OS/X by querying IOKit.
 
 # See the following for a reference of how to do this:
 # http://developer.apple.com/library/mac/#documentation/DeviceDrivers/Conceptual/WorkingWSerial/WWSerial_SerialDevs/SerialDevices.html#//apple_ref/doc/uid/TP30000384-CIHGEAFD
@@ -98,186 +98,217 @@ kCFNumberSInt64Type = 4
 
 
 def get_string_property(device_type, property):
-	"""
-	Search the given device for the specified string property
+    """
+    Search the given device for the specified string property
 
-	@param device_type Type of Device
-	@param property String to search for
-	@return Python string containing the value, or None if not found.
-	"""
-	key = cf.CFStringCreateWithCString(
-			kCFAllocatorDefault,
-			property.encode("utf-8"),
-			kCFStringEncodingUTF8)
+    @param device_type Type of Device
+    @param property String to search for
+    @return Python string containing the value, or None if not found.
+    """
+    key = cf.CFStringCreateWithCString(
+            kCFAllocatorDefault,
+            property.encode("utf-8"),
+            kCFStringEncodingUTF8)
 
-	CFContainer = iokit.IORegistryEntryCreateCFProperty(
-			device_type,
-			key,
-			kCFAllocatorDefault,
-			0)
-	output = None
+    CFContainer = iokit.IORegistryEntryCreateCFProperty(
+            device_type,
+            key,
+            kCFAllocatorDefault,
+            0)
+    output = None
 
-	if CFContainer:
-		output = cf.CFStringGetCStringPtr(CFContainer, 0)
-		if output is not None:
-			output = output.decode('utf-8')
-		else:
-			buffer = ctypes.create_string_buffer(io_name_size);
-			success = cf.CFStringGetCString(CFContainer, ctypes.byref(buffer), io_name_size, kCFStringEncodingUTF8)
-			if success:
-				output = buffer.value.decode('utf-8')
-		cf.CFRelease(CFContainer)
-	return output
+    if CFContainer:
+        output = cf.CFStringGetCStringPtr(CFContainer, 0)
+        if output is not None:
+            output = output.decode('utf-8')
+        else:
+            buffer = ctypes.create_string_buffer(io_name_size);
+            success = cf.CFStringGetCString(CFContainer, ctypes.byref(buffer), io_name_size, kCFStringEncodingUTF8)
+            if success:
+                output = buffer.value.decode('utf-8')
+        cf.CFRelease(CFContainer)
+    return output
 
 
 def get_int_property(device_type, property, cf_number_type):
-	"""
-	Search the given device for the specified string property
+    """
+    Search the given device for the specified string property
 
-	@param device_type Device to search
-	@param property String to search for
-	@param cf_number_type CFType number
+    @param device_type Device to search
+    @param property String to search for
+    @param cf_number_type CFType number
 
-	@return Python string containing the value, or None if not found.
-	"""
-	key = cf.CFStringCreateWithCString(
-			kCFAllocatorDefault,
-			property.encode("utf-8"),
-			kCFStringEncodingUTF8)
+    @return Python string containing the value, or None if not found.
+    """
+    key = cf.CFStringCreateWithCString(
+            kCFAllocatorDefault,
+            property.encode("utf-8"),
+            kCFStringEncodingUTF8)
 
-	CFContainer = iokit.IORegistryEntryCreateCFProperty(
-			device_type,
-			key,
-			kCFAllocatorDefault,
-			0)
+    CFContainer = iokit.IORegistryEntryCreateCFProperty(
+            device_type,
+            key,
+            kCFAllocatorDefault,
+            0)
 
-	if CFContainer:
-		if (cf_number_type == kCFNumberSInt32Type):
-			number = ctypes.c_uint32()
-		elif (cf_number_type == kCFNumberSInt16Type):
-			number = ctypes.c_uint16()
-		cf.CFNumberGetValue(CFContainer, cf_number_type, ctypes.byref(number))
-		cf.CFRelease(CFContainer)
-		return number.value
-	return None
+    if CFContainer:
+        if (cf_number_type == kCFNumberSInt32Type):
+            number = ctypes.c_uint32()
+        elif (cf_number_type == kCFNumberSInt16Type):
+            number = ctypes.c_uint16()
+        cf.CFNumberGetValue(CFContainer, cf_number_type, ctypes.byref(number))
+        cf.CFRelease(CFContainer)
+        return number.value
+    return None
 
 def IORegistryEntryGetName(device):
-	devicename = ctypes.create_string_buffer(io_name_size);
-	res = iokit.IORegistryEntryGetName(device, ctypes.byref(devicename))
-	if res != KERN_SUCCESS:
-		return None
-	# this works in python2 but may not be valid. Also I don't know if
-	# this encoding is guaranteed. It may be dependent on system locale.
-	return devicename.value.decode('utf-8')
+    devicename = ctypes.create_string_buffer(io_name_size);
+    res = iokit.IORegistryEntryGetName(device, ctypes.byref(devicename))
+    if res != KERN_SUCCESS:
+        return None
+    # this works in python2 but may not be valid. Also I don't know if
+    # this encoding is guaranteed. It may be dependent on system locale.
+    return devicename.value.decode('utf-8')
 
 def IOObjectGetClass(device):
-	classname = ctypes.create_string_buffer(io_name_size)
-	iokit.IOObjectGetClass(device, ctypes.byref(classname))
-	return classname.value
+    classname = ctypes.create_string_buffer(io_name_size)
+    iokit.IOObjectGetClass(device, ctypes.byref(classname))
+    return classname.value
 
 def GetParentDeviceByType(device, parent_type):
-	""" Find the first parent of a device that implements the parent_type
-		@param IOService Service to inspect
-		@return Pointer to the parent type, or None if it was not found.
-	"""
-	# First, try to walk up the IOService tree to find a parent of this device that is a IOUSBDevice.
-	parent_type = parent_type.encode('utf-8')
-	while IOObjectGetClass(device) != parent_type:
-		parent = ctypes.c_void_p()
-		response = iokit.IORegistryEntryGetParentEntry(
-				device,
-				"IOService".encode("utf-8"),
-				ctypes.byref(parent))
-		# If we weren't able to find a parent for the device, we're done.
-		if response != KERN_SUCCESS:
-			return None
-		device = parent
-	return device
+    """ Find the first parent of a device that implements the parent_type
+        @param IOService Service to inspect
+        @return Pointer to the parent type, or None if it was not found.
+    """
+    # First, try to walk up the IOService tree to find a parent of this device that is a IOUSBDevice.
+    parent_type = parent_type.encode('utf-8')
+    while IOObjectGetClass(device) != parent_type:
+        parent = ctypes.c_void_p()
+        response = iokit.IORegistryEntryGetParentEntry(
+                device,
+                "IOService".encode("utf-8"),
+                ctypes.byref(parent))
+        # If we weren't able to find a parent for the device, we're done.
+        if response != KERN_SUCCESS:
+            return None
+        device = parent
+    return device
 
 
 def GetIOServicesByType(service_type):
-	"""
-	returns iterator over specified service_type
-	"""
-	serial_port_iterator = ctypes.c_void_p()
+    """
+    returns iterator over specified service_type
+    """
+    serial_port_iterator = ctypes.c_void_p()
 
-	iokit.IOServiceGetMatchingServices(
-			kIOMasterPortDefault,
-			iokit.IOServiceMatching(service_type.encode('utf-8')),
-			ctypes.byref(serial_port_iterator))
+    iokit.IOServiceGetMatchingServices(
+            kIOMasterPortDefault,
+            iokit.IOServiceMatching(service_type.encode('utf-8')),
+            ctypes.byref(serial_port_iterator))
 
-	services = []
-	while iokit.IOIteratorIsValid(serial_port_iterator):
-		service = iokit.IOIteratorNext(serial_port_iterator)
-		if not service:
-			break
-		services.append(service)
-	iokit.IOObjectRelease(serial_port_iterator)
-	return services
+    services = []
+    while iokit.IOIteratorIsValid(serial_port_iterator):
+        service = iokit.IOIteratorNext(serial_port_iterator)
+        if not service:
+            break
+        services.append(service)
+    iokit.IOObjectRelease(serial_port_iterator)
+    return services
 
 
 def location_to_string(locationID):
-	"""
-	helper to calculate port and bus number from locationID
-	"""
-	loc = ['{}-'.format(locationID >> 24)]
-	while locationID & 0xf00000:
-		if len(loc) > 1:
-			loc.append('.')
-		loc.append('{}'.format((locationID >> 20) & 0xf))
-		locationID <<= 4
-	return ''.join(loc)
+    """
+    helper to calculate port and bus number from locationID
+    """
+    loc = ['{}-'.format(locationID >> 24)]
+    while locationID & 0xf00000:
+        if len(loc) > 1:
+            loc.append('.')
+        loc.append('{}'.format((locationID >> 20) & 0xf))
+        locationID <<= 4
+    return ''.join(loc)
 
 
 class SuitableSerialInterface(object):
-	pass
+    pass
+
+
+def scan_interfaces():
+    """
+    helper function to scan USB interfaces
+    returns a list of SuitableSerialInterface objects with name and id attributes
+    """
+    interfaces = []
+    # this is for [High] Sierra compatibility (AppleUSBInterface ?)
+    for interface in GetIOServicesByType('IOUSBInterface'):
+        name = get_string_property(interface, "USB Interface Name")
+        if name is None: continue
+        locationID = get_int_property(interface, "locationID", kCFNumberSInt32Type)
+        bInterfaceNumber = get_int_property(interface, "bInterfaceNumber", kCFNumberSInt32Type)
+        i = SuitableSerialInterface()
+        i.id = (locationID, bInterfaceNumber)
+        i.name = name
+        interfaces.append(i)
+    return interfaces
+
+
+def search_in_interfaces(serial_interfaces, identifier):
+    for interface in serial_interfaces:
+        if (interface.id == identifier):
+            return interface.name
+    return None
 
 
 def comports(include_links=False):
-	# XXX include_links is currently ignored. are links in /dev even supported here?
-	# Scan for all iokit serial ports
-	services = GetIOServicesByType('IOSerialBSDClient')
-	ports = []
-	for service in services:
-		# First, add the callout device file.
-		device = get_string_property(service, "IOCalloutDevice")
-		#device = get_string_property(service, "IODialinDevice")
-		if device:
-			info = list_ports_common.ListPortInfo(device)
-			# find the serial interface associated with this device
-			# like below, IOUSBInterface is IOUSBHostInterface on Apple Silicon
-			serial_interface = GetParentDeviceByType(service, "IOUSBHostInterface")
-			if serial_interface is None:
-				serial_interface = GetParentDeviceByType(service, "IOUSBInterface")
-			# If the serial port is implemented by IOUSBDevice
-			# NOTE IOUSBDevice was deprecated as of 10.11 and finally on Apple Silicon
-			# devices has been completely removed.  Thanks to @oskay for this patch.
-			usb_device = GetParentDeviceByType(service, "IOUSBHostDevice")
-			if not usb_device:
-				usb_device = GetParentDeviceByType(service, "IOUSBDevice")
-			if usb_device:
-				# fetch some useful informations from properties
-				info.vid = get_int_property(usb_device, "idVendor", kCFNumberSInt16Type)
-				info.pid = get_int_property(usb_device, "idProduct", kCFNumberSInt16Type)
-				info.serial_number = get_string_property(usb_device, kUSBSerialNumberString)
-				# We know this is a usb device, so the
-				# IORegistryEntryName should always be aliased to the
-				# usb product name string descriptor.
-				info.product = IORegistryEntryGetName(usb_device) or 'n/a'
-				info.manufacturer = get_string_property(usb_device, kUSBVendorString)
-				locationID = get_int_property(usb_device, "locationID", kCFNumberSInt32Type)
-				info.location = location_to_string(locationID)
-				info.interface = get_string_property(serial_interface, "kUSBString")
-				# "kUSBString" might not be available on older macs ? who knows ?
-				if info.interface is None:
-					info.interface = get_string_property(serial_interface, "USB Interface Name")
-				info.apply_usb_info()
-			ports.append(info)
-	return ports
+    # XXX include_links is currently ignored. are links in /dev even supported here?
+    # Scan for all iokit serial ports
+    services = GetIOServicesByType('IOSerialBSDClient')
+    ports = []
+    serial_interfaces = None
+    for service in services:
+        # First, add the callout device file.
+        device = get_string_property(service, "IOCalloutDevice")
+        if device:
+            info = list_ports_common.ListPortInfo(device)
+            # find the serial interface associated with this device
+            # like below, IOUSBInterface is IOUSBHostInterface on Apple Silicon
+            serial_interface = GetParentDeviceByType(service, "IOUSBHostInterface")
+            if serial_interface is None:
+                serial_interface = GetParentDeviceByType(service, "IOUSBInterface")
+            # If the serial port is implemented by IOUSBDevice
+            # NOTE IOUSBDevice was deprecated as of 10.11 and finally on Apple Silicon
+            # devices has been completely removed.  Thanks to @oskay for this patch.
+            usb_device = GetParentDeviceByType(service, "IOUSBHostDevice")
+            if not usb_device:
+                usb_device = GetParentDeviceByType(service, "IOUSBDevice")
+            if usb_device:
+                # fetch some useful informations from properties
+                info.vid = get_int_property(usb_device, "idVendor", kCFNumberSInt16Type)
+                info.pid = get_int_property(usb_device, "idProduct", kCFNumberSInt16Type)
+                info.serial_number = get_string_property(usb_device, kUSBSerialNumberString)
+                # We know this is a usb device, so the
+                # IORegistryEntryName should always be aliased to the
+                # usb product name string descriptor.
+                info.product = IORegistryEntryGetName(usb_device) or 'n/a'
+                info.manufacturer = get_string_property(usb_device, kUSBVendorString)
+                locationID = get_int_property(usb_device, "locationID", kCFNumberSInt32Type)
+                info.location = location_to_string(locationID)
+                info.interface = get_string_property(serial_interface, "kUSBString")
+                # "kUSBString" might not be available on older macOS
+                if info.interface is None:
+                    info.interface = get_string_property(serial_interface, "USB Interface Name")
+                if info.interface is None:
+                    # macOS 10.13 or earlier, the interface name is not in the hierarchy
+                    # of the serial port, use the scan to find it out there
+                    if serial_interfaces is None:
+                        serial_interfaces = scan_interfaces()
+                    bInterfaceNumber = get_int_property(serial_interface, "bInterfaceNumber", kCFNumberSInt32Type)
+                    info.interface = search_in_interfaces(serial_interfaces, (locationID, bInterfaceNumber))
+                info.apply_usb_info()
+            ports.append(info)
+    return ports
 
 # test
 if __name__ == '__main__':
-	cp = sorted(comports())
-	print("-"*70)
-	for port, desc, hwid in cp:
-		print("{}: {} [{}]".format(port, desc, hwid))
+    for port, desc, hwid in sorted(comports()):
+        print("{}: {} [{}]".format(port, desc, hwid))
