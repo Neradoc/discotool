@@ -36,8 +36,10 @@ except:
 	pass
 
 # windows versions
+# $Env:DISCOTOOL_CIRCUP = "python.exe -m circup"
 if sys.platform == "win32":
 	conf['SERIALTOOL'] = "putty -sercfg 115200 -serial {port}"
+	conf['CIRCUP'] = "python -m circup"
 
 # override configuration constants with environement variables
 for var in conf:
@@ -492,8 +494,8 @@ def get(ctx, key):
 	'main' or 'code.py' gives the path to the main Circuitpython file.
 	'vid' and 'pid' are shortcuts for vendor_id and product_id.
 	'sn' is a shortcut for serial_num.
-	'repl' is the serial port identified as Circuitpython REPL
-	'cdc' is the serial port identified as Circuitpython CDC2
+	'repl' is the serial port identified as Circuitpython REPL (also 'console')
+	'data' is the serial port identified as Circuitpython CDC2 (also 'cdc2')
 	
 	Example: screen `discotool -n clue get port`
 	"""
@@ -519,7 +521,7 @@ def get(ctx, key):
 				device['ports'].sort(key = lambda port: port['dev'])
 				values += [pp['dev'] for pp in device['ports']
 					if IS_REPL(pp['iface'])]
-		elif key in ("cdc", "cdc2", "data"):
+		elif key in ("cdc2", "data"):
 			if 'ports' in device:
 				device['ports'].sort(key = lambda port: port['dev'])
 				values += [pp['dev'] for pp in device['ports']
