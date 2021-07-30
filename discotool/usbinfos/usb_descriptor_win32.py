@@ -68,7 +68,7 @@ def get_root_hub_name(handle):
                                 None,
                                 act_len,
                                 None)
-    return buf[4:].decode('utf-16le')
+    return buf[4:].decode('utf-16le', "backslashreplace")
 
 
 def get_driverkey_name(handle, index):
@@ -89,7 +89,7 @@ def get_driverkey_name(handle, index):
                                 key_name.encode(),
                                 act_len,
                                 None)
-    return buf[8:].decode('utf-16le')
+    return buf[8:].decode('utf-16le', "backslashreplace")
 
 
 def get_ext_hub_name(handle, index):
@@ -105,7 +105,7 @@ def get_ext_hub_name(handle, index):
                                 hub_name.encode(),
                                 act_len,
                                 None)
-    return buf[8:].decode('utf-16le')
+    return buf[8:].decode('utf-16le', "backslashreplace")
 
 
 def get_str_desc(handle, conn_idx, str_idx):
@@ -125,7 +125,7 @@ def get_str_desc(handle, conn_idx, str_idx):
     except pywintypes.error as e:
          return '' # 'ERROR: no String Descriptor for index {}'.format(str_idx)
     if len(buf) > 16:
-        return buf[14:].decode('utf-16le')
+        return buf[14:].decode('utf-16le', "backslashreplace")
     return ''
 
 
