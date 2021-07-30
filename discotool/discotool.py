@@ -213,6 +213,9 @@ def main(ctx, auto, wait, name, serial, mount, nocolor, color, serialtool, circu
 	discotool, the discovery tool for USB microcontroller boards.
 	"""
 	ctx.ensure_object(dict)
+	# skip all
+	if ctx.invoked_subcommand == "version":
+		return
 	# overrides
 	if serialtool:
 		conf['SERIALTOOL'] = serialtool
