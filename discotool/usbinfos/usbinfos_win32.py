@@ -5,6 +5,7 @@ import re
 import wmi
 from .pyserial_list_ports_windows import comports
 from .usbinfos_common import *
+from . import usb_descriptor_win32
 
 def filter_port_description(description):
 	m = re.match(".*%(.+)%.*", description)
@@ -19,6 +20,12 @@ def get_devices_list(drive_info=False):
 	deviceList = []
 
 	serialNumbers = [{"serial_number": x.serial_number} for x in remainingPorts]
+
+	descriptors = {
+		# f"USB\\VID_{dev.vid:04X}&PID_{dev.pid:04X}\\{dev.serial_number}"
+		(dev.vid, dev.pid, dev.serial_number): dev
+		for dev in usb_descriptor_win32.get_all_devices()
+	}
 
 	allMounts = []
 	wmi_info = wmi.WMI()
@@ -94,7 +101,13 @@ def get_devices_list(drive_info=False):
 						'mount_point': volume+"\\",
 						'mains': mains,
 					})
-		
+
+		uid = (vid,pid,SN)
+		if uid in descriptors:
+			desc = descriptors[uid]
+			manufacturer = desc.manufacturer or manufacturer
+			name = desc.product or name
+
 		curDevice['version'] = version
 		curDevice['volumes'] = deviceVolumes
 		curDevice['name'] = name
@@ -104,6 +117,6 @@ def get_devices_list(drive_info=False):
 		curDevice['ports'] = ttys
 		curDevice['manufacturer'] = manufacturer
 		deviceList.append(curDevice)
-	#
+
 	rp = [port.device for port in remainingPorts]
 	return (deviceList,rp)
