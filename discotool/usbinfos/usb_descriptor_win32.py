@@ -29,6 +29,17 @@ class DeviceInfo:
         self.product = product
         self.serial_number = serial_number
 
+    def __repr__(self):
+        return (
+            "{\n"
+            f"\tpid:{repr(self.vid)},\n"
+            f"\tpid:{repr(self.pid)},\n"
+            f"\tmanufacturer:{repr(self.manufacturer)},\n"
+            f"\tproduct:{repr(self.product)},\n"
+            f"\tserial number:{repr(self.serial_number)}\n"
+            "}"
+        )
+
 
 def CTL_CODE(DeviceType, Function, Method, Access):
     return (DeviceType << 16) | (Access << 14) | (Function << 2) | Method
