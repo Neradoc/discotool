@@ -562,5 +562,8 @@ def json(ctx,pretty):
 
 @main.command()
 def version():
+	"""
+	Print the version information and number.
+	"""
 	from . import __version__
 	print(f"Discovery tool for microcontrollers, version {__version__}")

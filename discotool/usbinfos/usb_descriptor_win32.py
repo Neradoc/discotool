@@ -1,7 +1,9 @@
 """
-Ported to python3 from
-https://stackoverflow.com/questions/24756591/python-to-get-usb-descriptor
+Retrieve the USB descriptor information from connected devices
+using the win32api module.
 
+Ported to python3 and modified from:
+https://stackoverflow.com/questions/24756591/python-to-get-usb-descriptor
 Note the get_str_desc fix at the bottom.
 """
 
@@ -17,6 +19,9 @@ import pywintypes
 
 
 class DeviceInfo:
+    """
+    Device information class
+    """
     def __init__(self, vid, pid, manufacturer, product, serial_number):
         self.vid = vid
         self.pid = pid
