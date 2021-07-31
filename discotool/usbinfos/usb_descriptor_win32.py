@@ -1,6 +1,8 @@
 """
 Ported to python3 from
 https://stackoverflow.com/questions/24756591/python-to-get-usb-descriptor
+
+Note the get_str_desc fix at the bottom.
 """
 
 from __future__ import print_function
@@ -115,7 +117,7 @@ def get_str_desc(handle, conn_idx, str_idx):
                   0,
                   (USB_STRING_DESCRIPTOR_TYPE<<8) | str_idx,
                   win32api.GetSystemDefaultLangID(),
-                  12+MAXIMUM_USB_STRING_LENGTH)
+                  MAXIMUM_USB_STRING_LENGTH)
     try:
         buf = win32file.DeviceIoControl(handle,
                                     IOCTL_USB_GET_DESCRIPTOR_FROM_NODE_CONNECTION,
@@ -176,7 +178,7 @@ def get_hub_ports(handle, num_ports, level):
 def get_all_devices():
     devices = []
 
-    for i in range(10):
+    for i in range(32):
         name = r"\\.\HCD{}".format(i)
         handle = open_dev(name)
         if not handle:
