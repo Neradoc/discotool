@@ -6,3 +6,4 @@ venv
 *.egg-info
 .egg
 discotool/_version.py
+dist
