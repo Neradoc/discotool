@@ -16,13 +16,13 @@ import os
 import sys
 
 
-if sys.platform == "darwin":
+if sys.platform.startswith("darwin"):
 	from .usbinfos_macos import get_devices_list as _get_devices_list
 
-elif sys.platform == "linux":
+elif sys.platform.startswith("linux"):
 	from .usbinfos_linux import get_devices_list as _get_devices_list
 
-elif sys.platform == "win32":
+elif sys.platform.startswith("win32"):
 	from .usbinfos_win32 import get_devices_list as _get_devices_list
 
 else:

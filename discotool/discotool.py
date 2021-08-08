@@ -37,7 +37,7 @@ except:
 
 # windows versions
 # $Env:DISCOTOOL_CIRCUP = "python.exe -m circup"
-if sys.platform == "win32":
+if sys.platform.startswith("win32"):
 	conf['SERIALTOOL'] = "putty -sercfg 115200 -serial {port}"
 	conf['CIRCUP'] = "python -m circup"
 
