@@ -480,9 +480,12 @@ def cleanup(ctx, yes):
 						tree_clean(volume_src, yes)
 					else:
 						echo(f"{volume_src} is not a circuitpython board !", fg="red")
+				except click.exceptions.Abort:
+					return
 				except Exception as ex:
-					echo("An error occurred, skipping drive:", fg="red")
-					echo("\t", str(ex), fg="red")
+					if yes:
+						echo("An error occurred, skipping drive:", fg="red")
+						echo("\t", str(ex), fg="red")
 
 
 @main.command()
