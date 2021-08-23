@@ -455,7 +455,7 @@ def update(ctx, all):
 
 @main.command()
 @click.option(
-	"--yes", "-y",
+	"--yes", "-y", "--all", "-a",
 	is_flag=True, help="Always accept deleting without asking."
 )
 @click.pass_context
