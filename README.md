@@ -73,7 +73,7 @@ Filters select boards from the list of devices found to run a command on them. T
 	- **`--pretty`** **`-p`**: pretty print it for human reading.
 
 
-### Module
+## Module
 Exposes the `get_identified_devices(drive_info=False)` function. Find boards on the host's USB bus and tries to match them with serial ports and mounted drives, virtual or not. If `drive_info` is True, when a drive is found, it reads circuitpython information if available: CPY version number and main files in order of priority (code.py, etc.). This might trigger the board's autoreload.
 ```python
 import discotool
