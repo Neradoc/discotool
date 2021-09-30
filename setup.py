@@ -75,5 +75,5 @@ setuptools.setup(
     setup_requires=["setuptools_scm"],
     install_requires=required_modules,
     entry_points={"console_scripts": ["discotool=discotool.discotool:main"]},
-    keywords="cricuitpython, micropython",
+    keywords="circuitpython, micropython",
 )
