@@ -39,7 +39,7 @@ except:
 # $Env:DISCOTOOL_CIRCUP = "python.exe -m circup"
 if sys.platform.startswith("win32"):
 	conf['SERIALTOOL'] = "putty -sercfg 115200 -serial {port}"
-	conf['CIRCUP'] = "python -m circup"
+	conf['CIRCUP'] = "circup"
 
 # override configuration constants with environement variables
 for var in conf:
