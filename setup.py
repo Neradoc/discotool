@@ -46,7 +46,7 @@ required_modules = [
 ]
 
 setuptools.setup(
-    name="discotool-for-microcontrollers",
+    name="discotool",
     author="Neradoc",
     author_email="neraOnGit@ri1.fr",
     description="Discover, list, and use USB microcontoller boards.",
