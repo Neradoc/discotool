@@ -6,7 +6,7 @@ Module and tool to discover all boards connected to USB.
 ## Installing
 The `discotool` command line program and the `discotool` python module for python 3 can be installed with pip.
 ```
-python3 -m pip install discotool-for-microcontrollers
+python3 -m pip install discotool
 ```
 
 ## Compatibility
