@@ -349,18 +349,24 @@ def eject(ctx):
 )
 @click.option(
 	"--create", "-c",
-	is_flag=True, help="Create the target directory if does not exist."
+	is_flag=True,
+	help="Create the target directory if it does not exist."
 )
 @click.option(
 	"--date", "-d",
-	is_flag=True, help="Use a time stamp as subdirectory name, or add to the supplied name."
+	is_flag=True,
+	help="Use a time stamp as subdirectory name, or add to the supplied sub dir."
+)
+@click.option(
+	"--format", "-f",
+	help="Format the backup name. {timestamp}, {device}, {drive}, {serial}"
 )
 @click.argument(
 	"sub_dir",
 	required=False,
 )
 @click.pass_context
-def backup(ctx, backup_dir, create, date, sub_dir):
+def backup(ctx, backup_dir, create, date, format, sub_dir):
 	"""
 	Backup copy of all (Circuipython) drives found.
 	"""
@@ -392,8 +398,18 @@ def backup(ctx, backup_dir, create, date, sub_dir):
 				volume_bootout = os.path.join(volume_src,"boot_out.txt")
 				# only backup circuitpython boards
 				if os.path.exists(volume_src) and os.path.exists(volume_bootout):
-					container_name = re.sub(r"[^A-Za-z0-9]","_",device['name']).strip("_")
-					container_name += "_SN"+device['serial_num']
+					if format:
+						container_name = format.format(
+							drive=volume['name'],
+							timestamp=time.strftime("%Y%m%d-%H%M%S"),
+							device=device['name'],
+							serial=device['serial_num'],
+						)
+						container_name = re.sub(r"[^A-Za-z0-9-]","_",container_name).strip("_")
+					else:
+						container_name = re.sub(r"[^A-Za-z0-9]","_",device['name']).strip("_")
+						container_name += "_SN"+device['serial_num']
+						container_name += "_"+volume['name']
 					container = os.path.join(targetDir, container_name)
 					click.echo(f"Backing up {volume_src} to\n{container}")
 					shutil.copytree(volume_src, container) # dirs_exist_ok = True
