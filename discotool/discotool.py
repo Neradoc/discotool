@@ -37,6 +37,7 @@ except:
 
 # windows versions
 # $Env:DISCOTOOL_CIRCUP = "python.exe -m circup"
+# "D:\Program Files\teraterm\ttermpro.exe" /C={portnum}
 if sys.platform.startswith("win32"):
 	conf['SERIALTOOL'] = "putty -sercfg 115200 -serial {port}"
 	conf['CIRCUP'] = "circup"
@@ -309,8 +310,9 @@ def repl(ctx):
 			else:
 				port = potential_ports[0]
 		#
-		if "{port}" in conf['SERIALTOOL']:
-			command = conf['SERIALTOOL'].format(port=port['dev'])
+		if "{port}" in conf['SERIALTOOL'] or "{portnum}" in conf['SERIALTOOL']:
+			portnum = re.sub("[^0-9]", "", port['dev'])
+			command = conf['SERIALTOOL'].format(port=port['dev'], portnum=portnum)
 		else:
 			command = conf['SERIALTOOL'] + " " + port['dev']
 		echo(f"- Connecting to {name} ".ljust(conf['LINE_LENGTH'],"-"), fg="cyan", bold=True)
