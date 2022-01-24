@@ -295,10 +295,12 @@ def repl(ctx):
 	Connect to the REPL of the selected device.
 	"""
 	selectedDevices = ctx.obj["selectedDevices"]
+	if len(selectedDevices) == 0:
+		echo("No device selected.", fg="magenta")
 	for device in selectedDevices:
-		name = device['name']
+		device_name = device['name']
 		if len(device['ports']) == 0:
-			# echo(f"No serial port found ({name})", fg="red")
+			# echo(f"No serial port found ({device_name})", fg="red")
 			continue
 		if len(device['ports']) == 1:
 			port = device['ports'][0]
@@ -315,7 +317,7 @@ def repl(ctx):
 			command = conf['SERIALTOOL'].format(port=port['dev'], portnum=portnum)
 		else:
 			command = conf['SERIALTOOL'] + " " + port['dev']
-		echo(f"- Connecting to {name} ".ljust(conf['LINE_LENGTH'],"-"), fg="cyan", bold=True)
+		echo(f"- Connecting to {device_name} ".ljust(conf['LINE_LENGTH'],"-"), fg="cyan", bold=True)
 		echo("> "+command, fg="cyan", bold=True)
 		subprocess.run(command, shell=True)
 		echo("Fin.")
@@ -333,6 +335,8 @@ def eject(ctx):
 	else:
 		echo("- EJECTING DRIVES ".ljust(conf['LINE_LENGTH'],"-"), fg="magenta", bold=True)
 		for device in selectedDevices:
+			if len(device['volumes']) == 0:
+				echo(f"No drive found for {device['name']}.", fg="magenta")
 			for volume in device['volumes']:
 				if sys.platform == "darwin":
 					volumeName = os.path.basename(volume['mount_point'])
@@ -391,10 +395,12 @@ def backup(ctx, backup_dir, create, date, format, sub_dir):
 	else:
 		targetDir = backup_dir
 	if len(selectedDevices) == 0:
-		echo("No device selected", fg="magenta")
+		echo("No device selected.", fg="magenta")
 	else:
 		echo("- BACKING UP ".ljust(conf['LINE_LENGTH'],"-"), fg="green", bold=True)
 		for device in selectedDevices:
+			if len(device['volumes']) == 0:
+				echo(f"No drive found for {device['name']}.", fg="magenta")
 			for volume in device['volumes']:
 				volume_src = volume['mount_point']
 				volume_bootout = os.path.join(volume_src,"boot_out.txt")
@@ -427,8 +433,13 @@ def circup(ctx, circup_options):
 	Call circup on the selected device with the given options.
 	"""
 	selectedDevices = ctx.obj["selectedDevices"]
+	if len(selectedDevices) == 0:
+		echo("No device selected.", fg="magenta")
+		return
 	for device in selectedDevices:
-		name = device['name']
+		device_name = device['name']
+		if len(device['volumes']) == 0:
+			echo(f"No drive found for {device['name']}.", fg="magenta")
 		for volume in device['volumes']:
 			volume_src = volume['mount_point']
 			volume_bootout = os.path.join(volume_src,"boot_out.txt")
@@ -436,7 +447,7 @@ def circup(ctx, circup_options):
 			if os.path.exists(volume_src) and os.path.exists(volume_bootout):
 				command = [conf['CIRCUP'], "--path", volume_src]
 				command += [x for x in circup_options]
-				echo(f"- Running circup on {name} ".ljust(conf['LINE_LENGTH'],"-"), fg="cyan", bold=True)
+				echo(f"- Running circup on {device_name} ".ljust(conf['LINE_LENGTH'],"-"), fg="cyan", bold=True)
 				echo("> ", bold=True, nl=False)
 				click.echo(" ".join(command))
 				subprocess.run(" ".join(command), shell=True)
@@ -483,10 +494,12 @@ def cleanup(ctx, yes):
 	"""
 	selectedDevices = ctx.obj["selectedDevices"]
 	if len(selectedDevices) == 0:
-		echo("No device selected", fg="magenta")
+		echo("No device selected.", fg="magenta")
 	else:
 		echo("- CLEANING FILES ".ljust(conf['LINE_LENGTH'],"-"), fg="green", bold=True)
 		for device in selectedDevices:
+			if len(device['volumes']) == 0:
+				echo(f"No drive found for {device['name']}.", fg="magenta")
 			for volume in device['volumes']:
 				try:
 					volume_src = volume['mount_point']
