@@ -7,3 +7,4 @@ venv
 .egg
 discotool/_version.py
 dist
+.idea

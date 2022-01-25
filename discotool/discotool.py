@@ -22,6 +22,20 @@ conf = {
 	"LINE_LENGTH" : 0,
 }
 
+def cmd_exists(cmd,path=None):
+	""" test if path contains an executable file with name
+	"""
+	if path is None:
+		path = os.environ["PATH"].split(os.pathsep)
+
+	for prefix in path:
+		filename = os.path.join(prefix, cmd)
+		executable = os.access(filename, os.X_OK)
+		is_not_directory = os.path.isfile(filename)
+		if executable and is_not_directory:
+			return True
+	return False
+
 # click.echo/secho
 def echo(*text,nl=True,**kargs):
 	if bool(conf['NOCOLOR']):
@@ -33,6 +47,12 @@ def echo(*text,nl=True,**kargs):
 try:
 	conf['LINE_LENGTH'] = int(subprocess.check_output(["tput","cols"]))-1
 except:
+	pass
+
+# Linux order of preference: tio, screen
+if sys.platform.startswith("linux"):
+	if cmd_exists('tio'):
+		conf['SERIALTOOL'] = "tio -b 115200 {port}"
 	pass
 
 # windows versions
