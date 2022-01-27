@@ -23,7 +23,7 @@ SERIAL_PREFIXES = ["/dev/cu.usbmodem","/dev/cu.usbserial-"]
 # going recursively through all the devices
 # extracting the important informations
 # skipping the media infos and listing the volumes
-def readSysProfile(profile,devices,allMounts,drive_info):
+def readSysProfile(profile, devices, allMounts, drive_info):
 	global remainingPorts
 	for subGroup in profile:
 		# go depth first
@@ -62,6 +62,7 @@ def readSysProfile(profile,devices,allMounts,drive_info):
 		# try to guess the port using the Location ID or Serial Number
 		ttys = []
 		for port in list(remainingPorts):
+			found = False
 			# has SN, match it with the serial ports
 			if port.vid == vid and port.pid == pid \
 				and serial_num != "" and port.serial_number == serial_num:
@@ -70,12 +71,18 @@ def readSysProfile(profile,devices,allMounts,drive_info):
 				remainingPorts.remove(port)
 			# no SN, use location ID with standard mac paths
 			elif serial_num == "":
-				location = subGroup['location_id'][2:].split()[0]
-				for locationStr in SERIAL_PREFIXES:
-					if port.device.startswith(locationStr+location):
-						iface = port.interface or ""
-						ttys.append({'dev':port.device,'iface':iface})
-						remainingPorts.remove(port)
+				zlocation = subGroup['location_id'][2:].split()[0]
+				for zpos in range(len(zlocation)):
+					# remove ending zeros one by one
+					location = zlocation[:len(zlocation)-zpos]
+					for locationStr in SERIAL_PREFIXES:
+						if port.device.startswith(locationStr+location):
+							iface = port.interface or ""
+							ttys.append({'dev':port.device,'iface':iface})
+							remainingPorts.remove(port)
+							found = True
+					if location[-1] != "0" or found:
+						break
 		curDevice['ports'] = ttys
 		#
 		# now we select all the ones with a known VID or with an existing tty
