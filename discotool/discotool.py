@@ -12,6 +12,7 @@ import time
 from . import usbinfos
 
 DEFAULT_WINDOWS_SERIAL_TOOLS = {
+	"ttermpro": "ttermpro.exe /C={portnum}",
 	"putty": "putty -sercfg 115200 -serial {port}",
 }
 """List of serial tool configurations to try on windows"""
