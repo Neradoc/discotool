@@ -11,9 +11,19 @@ import sys
 import time
 from . import usbinfos
 
+DEFAULT_WINDOWS_SERIAL_TOOLS = {
+	"ttermpro": "ttermpro.exe /C={portnum}",
+	"putty": "putty -sercfg 115200 -serial {port}",
+}
+"""List of serial tool configurations to try on windows"""
+DEFAULT_UNIX_SERIAL_TOOLS = {
+	"tio": "tio -b 115200 {port}",
+	"screen": "screen {port} 115200",
+}
+"""List of serial tool configurations to try on unix systems"""
 conf = {
 	# command line to connect to the REPL (screen, tio)
-	"SERIALTOOL" : "screen {port} 115200",
+	"SERIALTOOL" : "",
 	# command line to call circup
 	"CIRCUP" : "circup",
 	# disable colors
@@ -21,6 +31,8 @@ conf = {
 	# separation line length
 	"LINE_LENGTH" : 0,
 }
+"""Global configuration of the app, will be updated with env and configs"""
+
 
 # click.echo/secho
 def echo(*text,nl=True,**kargs):
@@ -29,28 +41,37 @@ def echo(*text,nl=True,**kargs):
 	else:
 		click.secho(" ".join(text), nl=nl, **kargs)
 
-# command line conf
-try:
-	conf['LINE_LENGTH'] = int(subprocess.check_output(["tput","cols"]))-1
-except:
-	pass
 
-# windows versions
-# $Env:DISCOTOOL_CIRCUP = "python.exe -m circup"
-# "D:\Program Files\teraterm\ttermpro.exe" /C={portnum}
-if sys.platform.startswith("win32"):
-	conf['SERIALTOOL'] = "putty -sercfg 115200 -serial {port}"
-	conf['CIRCUP'] = "circup"
+# setup the command line configuration and tools
+def setup_command_tools():
+	# command line conf
+	try:
+		conf['LINE_LENGTH'] = int(subprocess.check_output(["tput","cols"]))-1
+	except:
+		pass
 
-# override configuration constants with environement variables
-for var in conf:
-	environ_var = f"DISCOTOOL_{var}"
-	if environ_var in os.environ:
-		try:
-			conf[var] = type(conf[var])(os.environ[environ_var])
-		except ValueError:
-			echo("Environment variable value invalid: ", nl=False)
-			echo(f"{environ_var}={os.environ[environ_var]}", underline=True) 
+	# select candidates by platform
+	if "win32" in sys.platform:
+		default_serial_tools = DEFAULT_WINDOWS_SERIAL_TOOLS
+	else:
+		default_serial_tools = DEFAULT_UNIX_SERIAL_TOOLS
+
+	# check in order the candidates
+	for name, command in default_serial_tools.items():
+		if shutil.which(name) is not None:
+			conf['SERIALTOOL'] = command
+			break
+
+	# override configuration constants with environement variables
+	for var in conf:
+		environ_var = f"DISCOTOOL_{var}"
+		if environ_var in os.environ:
+			try:
+				conf[var] = type(conf[var])(os.environ[environ_var])
+			except ValueError:
+				echo("Environment variable value invalid: ", nl=False)
+				echo(f"{environ_var}={os.environ[environ_var]}", underline=True)
+
 
 # string description of the circuitpython REPL and secondary serial port
 # generic, stringcar_m0_express, winterbloom_sol
@@ -214,6 +235,8 @@ def main(ctx, auto, wait, name, serial, mount, nocolor, color, serialtool, circu
 	discotool, the discovery tool for USB microcontroller boards.
 	"""
 	ctx.ensure_object(dict)
+	# setup the command tools configuration
+	setup_command_tools()
 	# skip all
 	if ctx.invoked_subcommand == "version":
 		return
@@ -260,7 +283,8 @@ def main(ctx, auto, wait, name, serial, mount, nocolor, color, serialtool, circu
 					ctx.obj["selectedDevices"] = selectedDevices
 					break
 			except KeyboardInterrupt:
-				exit(0)
+				# exit cleanly on ctrl-C rather than print an exception
+				sys.exit(0)
 	else:
 		# find only once
 		if noCriteria:
@@ -295,6 +319,9 @@ def repl(ctx):
 	Connect to the REPL of the selected device.
 	"""
 	selectedDevices = ctx.obj["selectedDevices"]
+	if conf['SERIALTOOL'].strip() == "":
+		echo("repl: No serial tool available, see documentation to set one.", fg="red")
+		sys.exit(1)
 	if len(selectedDevices) == 0:
 		echo("No device selected.", fg="magenta")
 	for device in selectedDevices:
