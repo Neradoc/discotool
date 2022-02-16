@@ -15,6 +15,7 @@ It currently runs on MacOS, Linux and Windows. The `requirements.txt` and `requi
 ## discotool CLI tool
 
 When running `discotool` while using a single board, it will be automatically selected for commands. These are the commands I use the most:
+
 - **`discotool repl`**: to connect to the REPL.
 - **`discotool install ...`**: to install modules via circup.
 - **`discotool update`**: to update modules via circup.
@@ -29,7 +30,12 @@ alias cpbackups='discotool backup --date ~/Backups/CPBackups'
 ### Configuration
 
 Define environment variables to override the default command line tools used by discotool. They are called by appending the relevant parameters at the end of the command, or replacing a placeholder.
-- **`DISCOTOOL_SERIALTOOL`**: (`screen`/`PuTTY`) command to connect to the REPL (tio, picocom, etc.), adds the port at the end or replaces `{port}` if present.
+
+- **`DISCOTOOL_SERIALTOOL`**: command to connect to the REPL (tio, picocom, etc.), adds the port at the end or replaces `{port}` if present. 
+	- on windows `{portnum}` is the `6` in `COM6`, required by TeraTerm.
+	- default values, using the first one found:
+		- **TeraTermPro**, **PuTTY** on Windows.
+		- **tio**, **screen** on linux/mac.
 - **`DISCOTOOL_CIRCUP`**: (`circup`) command to call circup (`pip install` it for the default).
 - **`DISCOTOOL_NOCOLOR`**: disables colors in the output if it evaluates to True.
 
@@ -55,21 +61,21 @@ Filters select boards from the list of devices found to run a command on them. T
 
 #### Commands
 
--	**`list`**: lists the selected boards, with name, manufacturer, serial number. Lists the serial ports and file volumes. If the `--info` option was given, identifies circuitpython code files present, as well as CPY version. On windows the name of the drive is listed in addition to the drive letter.
--	**`repl`**: connect to the REPL of the selected boards using the tool specified, screen by default, choosing the first serial port found if there is more than one.
--	**`eject`**: eject all selected board drives, or all found if no filter given. (MacOS only for now)
--	**`backup <destination dir> [<sub dir>]`**: copy the content of the selected boards drives into the destination dir or the optional sub dir (that will be created for you). Each board is put in a directory with its name and serial number.
-	-	**`--create`**: create the destination dir if it does not exist.
-	-	**`--date`**: use a time stamp as subdirectory name, or add to the supplied name.
--	**`circup <options>`**: calls circup with its `--path` option to each selected board and passes all other options and commands to it.
--	**`get <key>`**: print just the value for the key, for the selected devices. Can be used with backticks and such in a shell script. Includes special keys:
+- **`list`**: lists the selected boards, with name, manufacturer, serial number. Lists the serial ports and file volumes. If the `--info` option was given, identifies circuitpython code files present, as well as CPY version. On windows the name of the drive is listed in addition to the drive letter.
+- **`repl`**: connect to the REPL of the selected boards using the tool specified, screen by default, choosing the first serial port found if there is more than one.
+- **`eject`**: eject all selected board drives, or all found if no filter given. (MacOS only for now)
+- **`backup <destination dir> [<sub dir>]`**: copy the content of the selected boards drives into the destination dir or the optional sub dir (that will be created for you). Each board is put in a directory with its name and serial number.
+	- **`--create`**: create the destination dir if it does not exist.
+	- **`--date`**: use a time stamp as subdirectory name, or add to the supplied name.
+- **`circup <options>`**: calls circup with its `--path` option to each selected board and passes all other options and commands to it.
+- **`get <key>`**: print just the value for the key, for the selected devices. Can be used with backticks and such in a shell script. Includes special keys:
 	- **`pid`**, **`vid`**, **`sn`**: shortcuts for product_id, vendor_id and serial_num.
 	- **`volume`**: path to the (first) mounted drive of the device.
 	- **`port`**: (first) serial port of the device.
 	- **`repl`**: (first) REPL serial port of the device.
 	- **`cdc`**: (first) non-REPL serial port of the device.
 	- **`main`** or **`code.py`**: full path to the main file for circuitpython.
--	**`json`**: print the output of usbinfo as json for all selected boards.
+- **`json`**: print the output of usbinfo as json for all selected boards.
 	- **`--pretty`** **`-p`**: pretty print it for human reading.
 
 

@@ -283,7 +283,8 @@ def main(ctx, auto, wait, name, serial, mount, nocolor, color, serialtool, circu
 					ctx.obj["selectedDevices"] = selectedDevices
 					break
 			except KeyboardInterrupt:
-				exit(0)
+				# exit cleanly on ctrl-C rather than print an exception
+				sys.exit(0)
 	else:
 		# find only once
 		if noCriteria:
@@ -318,8 +319,9 @@ def repl(ctx):
 	Connect to the REPL of the selected device.
 	"""
 	selectedDevices = ctx.obj["selectedDevices"]
-	if conf['SERIALTOOL'] == "":
-		echo("No serial tool available, see documentation to set one.", fg="red")
+	if conf['SERIALTOOL'].strip() == "":
+		echo("repl: No serial tool available, see documentation to set one.", fg="red")
+		sys.exit(1)
 	if len(selectedDevices) == 0:
 		echo("No device selected.", fg="magenta")
 	for device in selectedDevices:
