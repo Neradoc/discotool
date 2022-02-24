@@ -93,6 +93,9 @@ def get_devices_list(drive_info=False):
 				if mount["product"]:
 					name = mount["product"]
 				for disk in mount["volumes"]:
+					if disk.VolumeName is None:
+						# disk unmounted or something
+						continue
 					volume = disk.DeviceID
 					if drive_info:
 						mains,version = get_cp_drive_info(volume)
