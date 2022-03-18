@@ -27,15 +27,15 @@ vid = args.vid
 
 # use filters based on given parameters
 if vid != 0 and product_name == "":
-    pad = discotool.devices_by_vidpid(vid)
+    boards = discotool.devices_by_vidpid(vid)
 elif not product_name:
-    pad = discotool.devices_by_name(PRODUCT_NAME)
+    boards = discotool.devices_by_name(PRODUCT_NAME)
 else:
-    pad = discotool.devices_by_name(product_name)
+    boards = discotool.devices_by_name(product_name)
 
 # send data to whatever is found
-if pad and (data_port := pad[0].data):
-    print(f"Board found: {pad[0].name}")
+if boards and (data_port := boards[0].data):
+    print(f"Board found: {boards[0].name}")
     print(f"Send {data_string} to {data_port}")
     with serial.Serial(data_port) as pp:
         pp.write(data_string)
