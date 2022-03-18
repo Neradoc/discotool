@@ -30,6 +30,23 @@ else:
 
 
 ############################################################
+# identify serial ports for Circuitpython
+############################################################
+
+# string description of the circuitpython REPL and secondary serial port
+# generic, stringcar_m0_express, winterbloom_sol
+SERIAL_NAMES = ["CircuitPython","StringCarM0Ex","Sol"]
+EXT_REPL = " CDC "
+EXT_CDC2 = " CDC2 "
+
+def port_is_repl(iface):
+	return any([(n + EXT_REPL).lower() in iface.lower() for n in SERIAL_NAMES])
+
+def port_is_data(iface):
+	return any([(n + EXT_CDC2).lower() in iface.lower() for n in SERIAL_NAMES])
+
+
+############################################################
 # device information class
 ############################################################
 class DeviceInfoDict(dict):
@@ -64,10 +81,14 @@ class DeviceInfoDict(dict):
 		self.data = None
 		self.repl = None
 		for port in self["ports"]:
-			if port["iface"].find("CDC2") >= 0:
+			if port_is_repl(port["iface"]):
+				self.repl = port["dev"]
+			elif port_is_data(port["iface"]):
 				self.data = port["dev"]
 			else:
-				self.repl = port["dev"]
+				# whatever is left is repl if repl not found
+				if self.repl is None:
+					self.repl = port["dev"]
 
 
 ############################################################
@@ -91,6 +112,15 @@ def get_unidentified_ports():
 ############################################################
 # get filtered lists
 ############################################################
+def devices_by_vidpid(vid, pid=None):
+	out = []
+	liste = get_identified_devices()
+	for dev in liste:
+		if (dev.vid == vid and (pid is None or dev.pid == pid)):
+			out.append(dev)
+	return out
+
+
 def devices_by_name(name):
 	out = []
 	liste = get_identified_devices()

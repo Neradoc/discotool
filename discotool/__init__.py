@@ -5,6 +5,7 @@ from .usbinfos import (
 	devices_by_name,
 	devices_by_drive,
 	devices_by_serial,
+	devices_by_vidpid,
 )
 
 try:
