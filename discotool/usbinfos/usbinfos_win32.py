@@ -19,11 +19,15 @@ def get_devices_list(drive_info=False):
 	remainingPorts = [x for x in comports() if x.vid is not None]
 	deviceList = []
 
-	serialNumbers = [{"serial_number": x.serial_number} for x in remainingPorts]
+	serialNumbers = set(x.serial_number.upper() for x in remainingPorts)
 
 	descriptors = {
 		# f"USB\\VID_{dev.vid:04X}&PID_{dev.pid:04X}\\{dev.serial_number}"
 		(dev.vid, dev.pid, dev.serial_number): dev
+		for dev in usb_descriptor_win32.get_all_devices()
+	}
+	vid_pid_by_serial = {
+		dev.serial_number: (dev.vid, dev.pid, )
 		for dev in usb_descriptor_win32.get_all_devices()
 	}
 
@@ -55,17 +59,17 @@ def get_devices_list(drive_info=False):
 			"disk": physical_disk,
 			"volumes": volumes,
 		})
-		serialNumbers.append({"serial_number":physical_disk.SerialNumber})
+		serialNumbers.add(physical_disk.SerialNumber)
 	
 	# how to get the actual list of USB connected devices in a useful way ?
 	# for now we take anything with a serial number: serial ports and disk drives
 	devices = serialNumbers
 
-	for device in devices:
+	for device in sorted(devices):
 		curDevice = {}
 		deviceVolumes = []
 		name = ""
-		SN = device['serial_number']
+		SN = device
 
 		ttys = []
 		vid = "0"
@@ -81,13 +85,11 @@ def get_devices_list(drive_info=False):
 				ttys.append({'dev':port.device,'iface':iface})
 				remainingPorts.remove(port)
 
-		if vid == "0": continue
-
 		version = ""
 		mains = []
 		deviceVolumes = []
 		for mount in allMounts:
-			if mount["disk"].SerialNumber == device['serial_number']:
+			if mount["disk"].SerialNumber == SN:
 				if mount["manufacturer"]:
 					manufacturer = mount["manufacturer"]
 				if mount["product"]:
@@ -105,7 +107,16 @@ def get_devices_list(drive_info=False):
 						'mains': mains,
 					})
 
-		uid = (vid,pid,SN)
+		if vid == "0":
+			# not a COM port, but know VID drive, keep it
+			if SN in vid_pid_by_serial:
+				vid, pid = vid_pid_by_serial[SN]
+				if vid not in VIDS:
+					continue
+			else:
+				continue
+
+		uid = (vid, pid, SN)
 		if uid in descriptors:
 			desc = descriptors[uid]
 			manufacturer = desc.manufacturer or manufacturer
