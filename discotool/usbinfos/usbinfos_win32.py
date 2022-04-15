@@ -132,7 +132,7 @@ def get_devices_list(drive_info=False):
 		curDevice['volumes'] = deviceVolumes
 		curDevice['ports'] = ttys
 		curDevice['version'] = version
-		curDevice['location'] = location
+		curDevice['usb_location'] = location
 		deviceList.append(curDevice)
 
 	rp = [port.device for port in remainingPorts]
