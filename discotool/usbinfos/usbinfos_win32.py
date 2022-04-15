@@ -69,12 +69,13 @@ def get_devices_list(drive_info=False):
 		curDevice = {}
 		deviceVolumes = []
 		name = ""
-		SN = device
+		SN = device.upper()
 
 		ttys = []
 		vid = "0"
 		pid = "0"
 		manufacturer = ""
+		location = ""
 		for port in list(remainingPorts):
 			if port.serial_number == SN:
 				vid = port.vid
@@ -121,15 +122,17 @@ def get_devices_list(drive_info=False):
 			desc = descriptors[uid]
 			manufacturer = desc.manufacturer or manufacturer
 			name = desc.product or name
+			location = desc.location or location
 
-		curDevice['version'] = version
-		curDevice['volumes'] = deviceVolumes
 		curDevice['name'] = name
+		curDevice['manufacturer'] = manufacturer
 		curDevice['vendor_id'] = int(vid)
 		curDevice['product_id'] = int(pid)
 		curDevice['serial_num'] = SN
+		curDevice['volumes'] = deviceVolumes
 		curDevice['ports'] = ttys
-		curDevice['manufacturer'] = manufacturer
+		curDevice['version'] = version
+		curDevice['location'] = location
 		deviceList.append(curDevice)
 
 	rp = [port.device for port in remainingPorts]
