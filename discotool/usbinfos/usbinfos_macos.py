@@ -123,6 +123,7 @@ def readSysProfile(profile, devices, allMounts, drive_info):
 						})
 		curDevice['volumes'] = deviceVolumes
 		curDevice['version'] = version
+		curDevice['location'] = subGroup['location_id'].split(" ")[0]
 		devices += [curDevice]
 	return devices
 
