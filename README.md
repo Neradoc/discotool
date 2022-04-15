@@ -102,7 +102,8 @@ Devices list (MacOS)
 		'mains': ['code.py'],
 		'mount_point': '/Volumes/CIRCUITPY',
 		'name': 'CIRCUITPY'
-	}]
+	}],
+	'usb_location': '0x14630000'
 }]
 ```
 
@@ -118,6 +119,23 @@ Devices list (MacOS)
 ### The DeviceInfoDict class
 The device list is actually a list of DeviceInfoDict, a subclass of dictionary that adds a few properties as shortcuts for paths in the dictionary, with a default value of `None`.
 
+Dictionary entries:
+- **`name`**: USB name of the board (str).
+- **`manufacturer`**: USB manufacturer of the board (str).
+- **`product_id`**: USB Product ID (int).
+- **`vendor_id`**: USB Vendor ID (int).
+- **`serial_num`**: USB Serial number of the board (str).
+- **`version`**: Circuitpython version, if found.
+- **`ports`**: list of serial ports found on the board, dictionaries.
+	- **`dev`**: port device, used to connect to the port. COM port on windows, dev path on linux (str).
+	- **`iface`**: interface name for the serial port (str).
+- **`volumes`**: list of mounted drives from the board, dictionaries.
+	- **`name`**: drive name, usually `CIRCUITPY` for Circuitpython or `*BOOT` for a UF2 bootloader drive (str).
+	- **`mount_point`**: mount path of the drive, letter on windows (str).
+	- **`mains`**: list of "main" files for Circuitpython (code.py etc.), by order of priority.
+- **`usb_location`**: an identifier for the USB port the board is connected to, should be consistent across reboots and modes (bootloader/application). 
+
+Shortcuts:
 - **`repl`**: REPL port, if any.
 - **`data`**: data port, if any.
 - **`drive`** and **`volume`**: board drive path.

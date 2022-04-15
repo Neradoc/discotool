@@ -22,12 +22,16 @@ class DeviceInfo:
     """
     Device information class
     """
-    def __init__(self, vid, pid, manufacturer, product, serial_number):
+    def __init__(self, vid, pid, manufacturer, product, serial_number, location):
         self.vid = vid
         self.pid = pid
         self.manufacturer = manufacturer
         self.product = product
-        self.serial_number = serial_number
+        if serial_number == 0:
+            self.serial_number = ""
+        else:
+            self.serial_number = str(serial_number).upper()
+        self.location = ".".join(f"{i}" for i in location)
 
     def __repr__(self):
         return (
@@ -37,6 +41,7 @@ class DeviceInfo:
             f"\tmanufacturer:{repr(self.manufacturer)},\n"
             f"\tproduct:{repr(self.product)},\n"
             f"\tserial number:{repr(self.serial_number)}\n"
+            f"\tlocation:{repr(self.location)}\n"
             "}"
         )
 
@@ -147,7 +152,7 @@ def get_str_desc(handle, conn_idx, str_idx):
     return ''
 
 
-def exam_hub(name, level):
+def exam_hub(name, level, location):
     handle = open_dev(r'\\.\{}'.format(name))
     if not handle:
         return
@@ -156,11 +161,11 @@ def exam_hub(name, level):
                                 None,
                                 76,
                                 None)
-    devices = get_hub_ports(handle, buf[6], level)
+    devices = get_hub_ports(handle, buf[6], level, location)
     handle.close()
     return devices
 
-def get_hub_ports(handle, num_ports, level):
+def get_hub_ports(handle, num_ports, level, location):
     devices = []
     for idx in range(1, num_ports+1):
         info = chr(idx) + '\0'*34
@@ -177,7 +182,7 @@ def get_hub_ports(handle, num_ports, level):
         _, vid, pid, vers, manu, prod, seri, _, ishub, _, stat = struct.unpack('=12sHHHBBB3s?6sL', buf[:35])
 
         if ishub:
-            devices += exam_hub(get_ext_hub_name(handle, idx), level)
+            devices += exam_hub(get_ext_hub_name(handle, idx), level + 1, location + (idx,))
         elif stat == 1:
             if (manu != 0 or prod != 0 or seri != 0):
                 # print('{}  [Port{}] {}'.format('  '*level, idx, get_driverkey_name(handle, idx)))
@@ -187,7 +192,7 @@ def get_hub_ports(handle, num_ports, level):
                     prod = get_str_desc(handle, idx, prod)
                 if seri != 0:
                     seri = get_str_desc(handle, idx, seri)
-                devices.append(DeviceInfo(vid, pid, manu, prod, seri))
+                devices.append(DeviceInfo(vid, pid, manu, prod, seri, location + (idx,)))
     return devices
 
 
@@ -213,10 +218,10 @@ def get_all_devices():
                                     None,
                                     76,
                                     None)
-        devices += get_hub_ports(dev_handle, buf[6], 0)
+        devices += get_hub_ports(dev_handle, buf[6], 0, (i,))
         dev_handle.close()
         handle.close()
-    
+
     return [dev for dev in devices if dev.serial_number not in ("","0","''")]
 
 def main():

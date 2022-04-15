@@ -75,15 +75,20 @@ def get_devices_list(drive_info=False):
 						'mains': mains,
 					})
 		#
-		# go through parents and find "devpath", remove matching parents
+		# the issue is that we might find duplicates of devices, by finding
+		# a parent and treating it as the device. So, when we find a device
+		# that has parents that are previously found devices, we remove
+		# said parents.
 		def noParent(dev):
-			for papa in device.traverse():
-				if devpath.startswith(dev['devpath']):
-					return False
+			# test if the already found device is a parent of the current device
+			# do we need to loop through its parents ?
+			if devpath.startswith(dev['devpath']):
+				return False
 			return True
-		deviceList = list(filter(noParent,deviceList))
+		deviceList = list(filter(noParent, deviceList))
 		#
-		if vid not in VIDS and len(ttys) == 0: continue
+		if vid not in VIDS and len(ttys) == 0:
+			continue
 		#
 		curDevice = {}
 		curDevice['version'] = version
@@ -95,6 +100,7 @@ def get_devices_list(drive_info=False):
 		curDevice['serial_num'] = SN
 		curDevice['ports'] = ttys
 		curDevice['manufacturer'] = manufacturer
+		curDevice['usb_location'] = devpath.split("/", 4)[-1]
 		deviceList.append(curDevice)
 	#
 	for i in range(len(deviceList)):
