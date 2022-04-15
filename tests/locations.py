@@ -21,6 +21,6 @@ for device in discotool.get_identified_devices():
 	print("Dict indexes:")
 # 	for x in device:
 # 		print(f"{x:12s} : {device[x]}")
-	print("location :", device["location"])
+	print("location :", device["usb_location"])
 
 display("")
