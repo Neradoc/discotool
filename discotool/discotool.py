@@ -49,7 +49,8 @@ def setup_command_tools():
 	# command line conf
 	try:
 		conf['LINE_LENGTH'] = int(subprocess.check_output(["tput","cols"]))-1
-	except:
+		# not sure what exceptions are raised when that fails
+	except Exception:
 		pass
 
 	# select candidates by platform
