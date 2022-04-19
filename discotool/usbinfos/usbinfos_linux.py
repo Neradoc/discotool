@@ -61,19 +61,17 @@ def get_devices_list(drive_info=False):
 							found = True
 					if not found:
 						ttys.append({'dev':tty,'iface':""})
-			# mouted drive(s)
-			if child.device_type == 'partition':
-				# volumeName = child.get('ID_FS_LABEL', '')
-				node = child.get('DEVNAME','')
-				if node in allMounts:
-					volume = allMounts[node]
-					if drive_info:
-						mains,version = get_cp_drive_info(volume)
-					deviceVolumes.append({
-						'name': os.path.basename(volume),
-						'mount_point': volume,
-						'mains': mains,
-					})
+			# mouted drive(s) (not using ID_FS_LABEL)
+			node = child.get('DEVNAME','')
+			if node and node in allMounts:
+				volume = allMounts[node]
+				if drive_info:
+					mains,version = get_cp_drive_info(volume)
+				deviceVolumes.append({
+					'name': os.path.basename(volume),
+					'mount_point': volume,
+					'mains': mains,
+				})
 		#
 		# the issue is that we might find duplicates of devices, by finding
 		# a parent and treating it as the device. So, when we find a device
