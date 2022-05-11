@@ -442,7 +442,7 @@ def backup(ctx, backup_dir, create, date, format, sub_dir):
 					echo(f"{volume_src} is not a circuitpython board !", fg="red")
 
 
-@main.command(aliases=['cu'])
+@main.command(aliases=['cu'], context_settings={"ignore_unknown_options":True})
 @click.argument("circup_options", nargs=-1)
 @click.pass_context
 def circup(ctx, circup_options):
@@ -471,7 +471,7 @@ def circup(ctx, circup_options):
 				break
 
 
-@main.command()
+@main.command(context_settings={"ignore_unknown_options":True})
 @click.argument("circup_options", nargs=-1)
 @click.pass_context
 def install(ctx, circup_options):
@@ -482,20 +482,14 @@ def install(ctx, circup_options):
 	ctx.invoke(circup, circup_options = circup_options)
 
 
-@main.command()
-@click.option(
-	"--all",
-	is_flag=True, help="Update all modules without Major Version warnings."
-)
+@main.command(context_settings={"ignore_unknown_options":True})
+@click.argument("circup_options", nargs=-1)
 @click.pass_context
-def update(ctx, all):
+def update(ctx, circup_options):
 	"""
 	Call circup update on the selected device with the given options.
 	"""
-	if all:
-		circup_options = ("update","--all",)
-	else:
-		circup_options = ("update",)
+	circup_options = ("update",) + circup_options
 	ctx.invoke(circup, circup_options = circup_options)
 
 
