@@ -10,7 +10,7 @@ python3 -m pip install discotool
 ```
 
 ## Compatibility
-It currently runs on MacOS, Linux and Windows. The `requirements.txt` and `requirements-*.txt` files list the requirements per platform. The windows port still has issue and might be missing information. Help is welcome.
+It currently runs on MacOS, Linux and Windows. It should not require any installation outside of pip dependencies (no libusb, etc.). If it doesn't work for you, an issue with relevant OS information is welcome.
 
 ## discotool CLI tool
 
