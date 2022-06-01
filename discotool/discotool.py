@@ -172,6 +172,19 @@ def tree_clean(root, force=False):
 					os.remove(file)
 
 
+# connect to port
+def connect_to_port(device, port):
+	device_name = device['name']
+	if "{port}" in conf['SERIALTOOL'] or "{portnum}" in conf['SERIALTOOL']:
+		portnum = re.sub("[^0-9]", "", port)
+		command = conf['SERIALTOOL'].format(port=port, portnum=portnum)
+	else:
+		command = conf['SERIALTOOL'] + " " + port
+	echo(f"- Connecting to {device_name} ".ljust(conf['LINE_LENGTH'],"-"), fg="cyan", bold=True)
+	echo("> "+command, fg="cyan", bold=True)
+	subprocess.run(command, shell=True)
+
+
 @click.group(invoke_without_command=True, cls=ClickAliasedGroup)
 @click.option(
 	"--auto", "-a",
@@ -315,7 +328,6 @@ def repl(ctx):
 	if len(selectedDevices) == 0:
 		echo("No device selected.", fg="magenta")
 	for device in selectedDevices:
-		device_name = device['name']
 		if len(device['ports']) == 0:
 			# echo(f"No serial port found ({device_name})", fg="red")
 			continue
@@ -328,16 +340,30 @@ def repl(ctx):
 				port = device['ports'][0]
 			else:
 				port = potential_ports[0]
-		#
-		if "{port}" in conf['SERIALTOOL'] or "{portnum}" in conf['SERIALTOOL']:
-			portnum = re.sub("[^0-9]", "", port['dev'])
-			command = conf['SERIALTOOL'].format(port=port['dev'], portnum=portnum)
-		else:
-			command = conf['SERIALTOOL'] + " " + port['dev']
-		echo(f"- Connecting to {device_name} ".ljust(conf['LINE_LENGTH'],"-"), fg="cyan", bold=True)
-		echo("> "+command, fg="cyan", bold=True)
-		subprocess.run(command, shell=True)
-		echo("Fin.")
+		port = port['dev']
+		connect_to_port(device, port)
+		echo("Leaving REPL.", fg="cyan")
+
+
+@main.command()
+@click.pass_context
+def data(ctx):
+	"""
+	Connect to the DATA port of the selected device if any.
+	"""
+	selectedDevices = ctx.obj["selectedDevices"]
+	if conf['SERIALTOOL'].strip() == "":
+		echo("repl: No serial tool available, see documentation to set one.", fg="red")
+		sys.exit(1)
+	if len(selectedDevices) == 0:
+		echo("No device selected.", fg="magenta")
+	for device in selectedDevices:
+		port = device.data
+		if port is None:
+			echo(f"- No data port for {device['name']} ".ljust(conf['LINE_LENGTH'],"-"), fg="red", bold=True)
+			continue
+		connect_to_port(device, port)
+		echo("Fin.", fg="cyan")
 
 
 @main.command()
