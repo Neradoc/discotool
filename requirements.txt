@@ -2,3 +2,8 @@ click>=7.1.2
 click-aliases==1.0.1
 psutil>=5.8.0
 pyserial>=3.4
+
+pywin32 ; sys_platform=='Windows'
+wmi ; sys_platform=='Windows'
+
+pyudev ; sys_platform=='Linux'
