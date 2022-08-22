@@ -146,7 +146,8 @@ Shortcuts:
 
 ## Screenshots:
 
-`DISCOTOOL_SERIALTOOL=tio discotool -n clue`
+Using tio:  
+`discotool -n clue`
 ![discotool repl](docs/repl_to_clue.png)
 
 `discotool -n clue circup update`
