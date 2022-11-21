@@ -17,7 +17,7 @@ DATA_STRING = "Hello World"
 parser = argparse.ArgumentParser()
 parser.add_argument("--name", type=str, help="Product name", default="")
 parser.add_argument("--data", type=str, help="Data to send", default=DATA_STRING)
-parser.add_argument("--vid", type=int, help="Product name", default=0)
+parser.add_argument("--vid", type=int, help="Vendor ID", default=0)
 args = parser.parse_args()
 
 # prepare the parameters
