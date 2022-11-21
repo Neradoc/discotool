@@ -8,16 +8,13 @@ import serial
 import shutil
 import time
 
-PRODUCT_NAME = "QT PY"  # not case sensitive
-
 def serial_trick(port):
     serial.Serial(port, 1200).close()
 
 # This lets you specify the drive name and data to send in the command line
 parser = argparse.ArgumentParser()
-parser.add_argument("--name", type=str, help="Product name", default="")
+parser.add_argument("--name", type=str, help="Product name")
 parser.add_argument("--uf2", type=str, help="Data to send", default="firmware.uf2")
-parser.add_argument("--vid", type=int, help="Product name", default=0)
 args = parser.parse_args()
 
 # prepare the parameters
@@ -25,7 +22,7 @@ product_name = args.name
 uf2_file = args.uf2
 
 if not os.path.exists(uf2_file):
-    print("UF2 file not found")
+    print("UF2 file not found, running in test mode")
 
 # use filters based on given parameters
 if not product_name:
@@ -61,4 +58,7 @@ for board in boards:
 
     print(f"Copy {uf2_file} to {board.drive}")
     uf2_name = os.path.basename(uf2_file)
-    shutil.copyfile(uf2_file, os.path.join(board.drive, uf2_name))
+    if os.path.exists(uf2_file):
+        shutil.copyfile(uf2_file, os.path.join(board.drive, uf2_name))
+    else:
+        print("File does not exist, no copy")
