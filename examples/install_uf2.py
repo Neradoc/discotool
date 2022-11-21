@@ -44,14 +44,15 @@ for board in boards:
         continue
 
     for i in range(10):
-        print("Looking for boot device")
+        print("Waiting for boot device with drive")
         time.sleep(1)
         devices = discotool.get_identified_devices()
         found = False
         for device in devices:
             if device["usb_location"] == usb_port:
-                board = device
-                found = True
+                if device.drive is not None:
+                    board = device
+                    found = True
         if found:
             break
     else: # no break:
@@ -60,4 +61,4 @@ for board in boards:
 
     print(f"Copy {uf2_file} to {board.drive}")
     uf2_name = os.path.basename(uf2_file)
-    shutil.copyfile(uf2_file, os.join(board.drive, uf2_name))
+    shutil.copyfile(uf2_file, os.path.join(board.drive, uf2_name))
