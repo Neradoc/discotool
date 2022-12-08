@@ -155,7 +155,7 @@ def get_str_desc(handle, conn_idx, str_idx):
 def exam_hub(name, level, location):
     handle = open_dev(r'\\.\{}'.format(name))
     if not handle:
-        return
+        return []
     buf = win32file.DeviceIoControl(handle,
                                 IOCTL_USB_GET_NODE_INFORMATION,
                                 None,
@@ -177,12 +177,17 @@ def get_hub_ports(handle, num_ports, level, location):
                                         None)
         except pywintypes.error as e:
             # print(e.winerror, e.funcname, e.strerror)
-            return
+            pass
 
         _, vid, pid, vers, manu, prod, seri, _, ishub, _, stat = struct.unpack('=12sHHHBBB3s?6sL', buf[:35])
 
         if ishub:
-            devices += exam_hub(get_ext_hub_name(handle, idx), level + 1, location + (idx,))
+            try:
+                examed = exam_hub(get_ext_hub_name(handle, idx), level + 1, location + (idx,))
+                if examed:
+                    devices += examed
+            except TypeError as ex:
+                pass
         elif stat == 1:
             if (manu != 0 or prod != 0 or seri != 0):
                 # print('{}  [Port{}] {}'.format('  '*level, idx, get_driverkey_name(handle, idx)))
