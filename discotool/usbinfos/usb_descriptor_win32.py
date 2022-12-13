@@ -40,8 +40,8 @@ class DeviceInfo:
             f"\tpid:{repr(self.pid)},\n"
             f"\tmanufacturer:{repr(self.manufacturer)},\n"
             f"\tproduct:{repr(self.product)},\n"
-            f"\tserial number:{repr(self.serial_number)}\n"
-            f"\tlocation:{repr(self.location)}\n"
+            f"\tserial_number:{repr(self.serial_number)},\n"
+            f"\tlocation:{repr(self.location)},\n"
             "}"
         )
 
