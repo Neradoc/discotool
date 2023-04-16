@@ -210,6 +210,12 @@ def connect_to_port(device, port):
 	help="Select a device by matching the path to its associated mount.",
 )
 @click.option(
+	"any_criteria",
+	"--any", "-y",
+	default="",
+	help="Select a device by matching name, serial, or mount.",
+)
+@click.option(
 	"--nocolor",
 	is_flag=True, help="Disable colors in the terminal."
 )
@@ -233,7 +239,7 @@ def connect_to_port(device, port):
 	help="Fetch more information. Can cause drive access and code reload on Circuitpython."
 )
 @click.pass_context
-def main(ctx, auto, wait, name, serial, mount, nocolor, color, serialtool, circuptool, info):
+def main(ctx, auto, wait, name, serial, mount, any_criteria, nocolor, color, serialtool, circuptool, info):
 	"""
 	discotool, the discovery tool for USB microcontroller boards.
 	"""
@@ -257,8 +263,18 @@ def main(ctx, auto, wait, name, serial, mount, nocolor, color, serialtool, circu
 	name = name.lower().strip()
 	serial = serial.lower().strip()
 	mount = mount.lower().strip()
+	any_criteria = any_criteria.lower().strip()
+	# any_criteria works alone
+	if any_criteria != "":
+		if name != "" or serial != "" or mount != "":
+			print("The 'any' filter can not be used in conjunction with others.")
+			sys.exit(2)
+			# any criteria
+		name = any_criteria
+		serial  = any_criteria
+		mount = any_criteria
 	# differenciate "nothing found" and "nothing asked"
-	noCriteria = (serial=="" and name=="" and mount=="" and not auto)
+	noCriteria = (serial == "" and name == "" and mount == "" and not auto)
 	ctx.obj["noCriteria"] = noCriteria
 	# compute the data
 	deviceList, remainingPorts = usbinfos.get_devices_list(drive_info=info)
@@ -303,7 +319,6 @@ def main(ctx, auto, wait, name, serial, mount, nocolor, color, serialtool, circu
 			ctx.invoke(list)
 		else:
 			ctx.invoke(repl)
-
 
 @main.command()
 @click.pass_context
