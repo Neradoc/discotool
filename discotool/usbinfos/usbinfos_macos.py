@@ -8,7 +8,7 @@ Virtual drives that don't appear by name in  SPSUSBDataType are found through ps
 We find the microbits volumes by matching the serial number on the volume with the one in the USB. Otherwise the volume does not seem to be listed in system_profiler.
 """
 
-import os, json, sys
+import os, json, sys, re
 import subprocess
 import psutil
 #from serial.tools.list_ports import comports
@@ -18,7 +18,12 @@ from .usbinfos_common import *
 # where to find serial ports named by location on macOS
 # NOTE: we don't check for /dev/tty.usbmodem<serial_num>
 #       because devices with serial numbers are found differently
-SERIAL_PREFIXES = ["/dev/cu.usbmodem","/dev/cu.usbserial-"]
+SERIAL_PREFIXES = [
+	"/dev/cu.usbmodem",
+	"/dev/cu.usbserial-",
+#	"/dev/cu.wchusbserial",
+]
+SERIAL_PATTERN = re.compile("/dev/.*(?:modem|serial)[^a-f0-9]*([0-9a-f]+)$")
 
 # going recursively through all the devices
 # extracting the important informations
@@ -77,6 +82,13 @@ def readSysProfile(profile, devices, allMounts, drive_info):
 					location = zlocation[:len(zlocation)-zpos]
 					for locationStr in SERIAL_PREFIXES:
 						if port.device.startswith(locationStr+location):
+							iface = port.interface or ""
+							ttys.append({'dev':port.device,'iface':iface})
+							remainingPorts.remove(port)
+							found = True
+					if not found:
+						res = SERIAL_PATTERN.search(port.device)
+						if res and res.group(1) == location:
 							iface = port.interface or ""
 							ttys.append({'dev':port.device,'iface':iface})
 							remainingPorts.remove(port)
