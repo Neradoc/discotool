@@ -23,7 +23,7 @@ SERIAL_PREFIXES = [
 	"/dev/cu.usbserial-",
 #	"/dev/cu.wchusbserial",
 ]
-SERIAL_PATTERN = re.compile("/dev/.*(?:modem|serial)[^a-f0-9]*([0-9a-f]+)$")
+SERIAL_PATTERN_USBLOC = re.compile("/dev/[^0-9]*([0-9]+)$")
 
 # going recursively through all the devices
 # extracting the important informations
@@ -87,7 +87,7 @@ def readSysProfile(profile, devices, allMounts, drive_info):
 							remainingPorts.remove(port)
 							found = True
 					if not found:
-						res = SERIAL_PATTERN.search(port.device)
+						res = SERIAL_PATTERN_USBLOC.search(port.device)
 						if res and res.group(1) == location:
 							iface = port.interface or ""
 							ttys.append({'dev':port.device,'iface':iface})
