@@ -9,12 +9,19 @@ import shutil
 import subprocess
 import sys
 import time
+import traceback
 from . import usbinfos
 from .usbinfos import port_is_repl, port_is_data
 
 # fix for bug on macOS where copytree errors when copying between filesystems
 COPYSTAT = shutil.copystat
-NOCOPYSTAT = lambda *x, **y: None
+def NOCOPYSTAT(*a, **k):
+	try:
+		COPYSTAT(*a, **k)
+	except Exception:
+		pass
+
+SHUTIL_IGNORE = shutil.ignore_patterns("._*")
 
 DEFAULT_WINDOWS_SERIAL_TOOLS = {
 	"ttermpro": "ttermpro.exe /C={portnum}",
@@ -482,7 +489,16 @@ def backup(ctx, backup_dir, create, date, format, sub_dir):
 					container = os.path.join(targetDir, container_name)
 					click.echo(f"Backing up {volume_src} to\n{container}")
 					shutil.copystat = NOCOPYSTAT
-					shutil.copytree(volume_src, container, dirs_exist_ok = True)
+					try:
+						shutil.copytree(
+							volume_src,
+							container,
+							ignore = SHUTIL_IGNORE,
+							dirs_exist_ok = True,
+						)
+					except shutil.Error as err:
+						print("There was an error, backup might be incomplete.")
+						traceback.print_exception(err)
 					shutil.copystat = COPYSTAT
 				else:
 					echo(f"{volume_src} is not a circuitpython board !", fg="red")
