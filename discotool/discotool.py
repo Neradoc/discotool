@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
+import appdirs
 import click
 from click_aliases import ClickAliasedGroup
-from json import dumps
+import json
 import os
 import re
 import shutil
@@ -45,6 +46,8 @@ conf = {
 }
 """Global configuration of the app, will be updated with env and configs"""
 
+APPDIR = appdirs.user_data_dir(appname="discotool", appauthor="neradoc")
+alias_file = os.path.join(APPDIR, "alias.json")
 
 # click.echo/secho
 def echo(*text,nl=True,**kargs):
@@ -326,13 +329,13 @@ def main(ctx, auto, wait, name, serial, mount, any_criteria, nocolor, color, ser
 	# here we exit and run the command, or if no command, go to repl
 	if ctx.invoked_subcommand is None:
 		if noCriteria:
-			ctx.invoke(list)
+			ctx.invoke(list_cli)
 		else:
 			ctx.invoke(repl)
 
-@main.command()
+@main.command("list")
 @click.pass_context
-def list(ctx):
+def list_cli(ctx):
 	"""
 	List all the devices that have been detected.
 	"""
@@ -615,7 +618,7 @@ def get(ctx, key):
 			if type(device[key]) == str:
 				values.append(device[key])
 			else:
-				values.append(dumps(device[key]))
+				values.append(json.dumps(device[key]))
 		elif key == "volume":
 			if 'volumes' in device:
 				if len(device['volumes']) > 0:
@@ -651,20 +654,20 @@ def get(ctx, key):
 	click.echo("\n".join([str(x) for x in values]))
 
 
-@main.command()
+@main.command("json")
 @click.option(
 	"--pretty", "-p",
 	is_flag=True, help="Pretty print the json with 2 spaces (I know...) indent."
 )
 @click.pass_context
-def json(ctx,pretty):
+def json_cli(ctx,pretty):
 	"""
 	Get the values as a json string.
 	"""
 	selectedDevices = ctx.obj["selectedDevices"]
 	if pretty: indent = 2
 	else: indent = None
-	click.echo(dumps(selectedDevices,indent=indent))
+	click.echo(json.dumps(selectedDevices,indent=indent))
 
 
 @main.command()
@@ -674,3 +677,36 @@ def version():
 	"""
 	from . import __version__
 	print(f"Discovery tool for microcontrollers, version {__version__}")
+
+
+@main.command()
+@click.argument("key", required=False, default=None)
+@click.argument("value", required=False, default=None)
+@click.pass_context
+def alias(ctx, key, value):
+	"""
+	Create or call an alias.
+	"""
+	aliases = {}
+	if os.path.isfile(alias_file):
+		try:
+			with open(alias_file, "r") as fp:
+				aliases = json.load(fp)
+		except (ValueError, json.decoder.JSONDecodeError):
+			pass
+
+	if key is None:
+		for key, value in aliases.items():
+			click.echo(f"{key}:")
+			click.echo(f"    {value}")
+	elif value is None:
+		if key in aliases:
+			value = aliases[key]
+			command = f"discotool {value}"
+			click.secho(command, fg="green")
+			subprocess.run(command, shell=True)
+	else:
+		aliases[key] = value
+		os.makedirs(APPDIR, exist_ok=True)
+		with open(alias_file, "w") as fp:
+			json.dump(aliases, fp, indent=2)
