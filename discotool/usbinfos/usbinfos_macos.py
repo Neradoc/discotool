@@ -159,6 +159,6 @@ def get_devices_list(drive_info=False):
 		allMounts[part.device] = part.mountpoint
 	
 	# list the devices
-	deviceList = readSysProfile(system_profile['SPUSBDataType'], [], allMounts, drive_info)
+	deviceList = readSysProfile(system_profile[usb_datatype], [], allMounts, drive_info)
 	rp = [port.device for port in remainingPorts]
 	return (deviceList,rp)
