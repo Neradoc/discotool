@@ -11,6 +11,7 @@ We find the microbits volumes by matching the serial number on the volume with t
 import os, json, sys, re
 import subprocess
 import psutil
+import platform
 #from serial.tools.list_ports import comports
 from .pyserial_list_ports_osx import comports
 from .usbinfos_common import *
@@ -141,8 +142,12 @@ def readSysProfile(profile, devices, allMounts, drive_info):
 
 def get_devices_list(drive_info=False):
 	global remainingPorts
+	os_version = int(platform.mac_ver()[0].split('.')[0])
+	usb_datatype = "SPUSBHostDataType"
+	if os_version < 26:   # pre-Tahoe
+		usb_datatype = "SPUSBDataType"
 	# system_profiler -json SPUSBDataType
-	ses = subprocess.check_output(["system_profiler","-json","SPUSBDataType"], stderr=subprocess.DEVNULL)
+	ses = subprocess.check_output(["system_profiler","-json",usb_datatype], stderr=subprocess.DEVNULL)
 	system_profile = json.loads(ses)
 	
 	# list the existing ports
