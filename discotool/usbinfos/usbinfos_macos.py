@@ -35,7 +35,6 @@ SERIAL_PREFIXES = [
 ]
 SERIAL_PATTERN_USBLOC = re.compile("/dev/[^0-9]*([0-9]+)$")
 
-
 # ioreg helper
 def _node_class(entry):
 	"""Get the IOKit class of an ioreg node. The plist from ioreg -a uses
@@ -94,13 +93,16 @@ def _collect_usb_devices(entries):
 	under hub-port nodes.  We need to walk the entire tree and collect
 	every node whose IOObjectClass is IOUSBHostDevice (or AppleUSBDevice)
 	and that has a non-zero idVendor.
+	Hubs (bDeviceClass == 9) are skipped — only end devices are returned.
 	Returns a flat list of device entries.
 	"""
+	USB_HUB_CLASS = 9
 	devices = []
 	for entry in entries:
 		obj_class = _node_class(entry)
 		has_vid = entry.get("idVendor", 0) != 0
-		if obj_class in ("IOUSBHostDevice", "AppleUSBDevice") and has_vid:
+		is_hub = entry.get("bDeviceClass", 0) == USB_HUB_CLASS
+		if obj_class in ("IOUSBHostDevice", "AppleUSBDevice") and has_vid and not is_hub:
 			devices.append(entry)
 		# always recurse into children regardless of this node's class,
 		# because devices sit under hub-port nodes (AppleUSB20HubPort etc.)
@@ -140,7 +142,6 @@ def _walk_children_for_ports_and_disks(node, serial_ports, bsd_names):
 		_walk_children_for_ports_and_disks(child, serial_ports, bsd_names)
 
 
-# port-matching logic
 def _match_ports_to_device(vid, pid, serial_num, location_id_str):
 	"""Match serial ports from remainingPorts to a USB device using either
 	VID+PID+serial or location_id prefix in the device path.
