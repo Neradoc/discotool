@@ -28,7 +28,7 @@ from .usbinfos_common import *
 
 # where to find serial ports named by location on macOS
 # NOTE: we don't check for /dev/tty.usbmodem<serial_num>
-#       because devices with serial numbers are found differently
+#	because devices with serial numbers are found differently
 SERIAL_PREFIXES = [
 	"/dev/cu.usbmodem",
 	"/dev/cu.usbserial-",
@@ -381,7 +381,7 @@ def _get_system_profiler_data():
 			["system_profiler", "-json", "SPUSBDataType"],
 			stderr=subprocess.DEVNULL,
 		)
- 	except (subprocess.CalledProcessError, FileNotFoundError):
+	except (subprocess.CalledProcessError, FileNotFoundError):
 		return None
 	if not ses or not ses.strip():
 		return None
