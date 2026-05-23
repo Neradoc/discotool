@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Copyright 2026 Neradoc, https://neradoc.me
+# SPDX-License-Identifier: MIT
+
 THIS_FILE=`realpath "$0"`
 FILE_DIR=`dirname "$THIS_FILE"`
 REPO_DIR=`dirname "$FILE_DIR"`

@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Copyright 2026 Neradoc, https://neradoc.me
+# SPDX-License-Identifier: MIT
+
 """
 Retrieve the USB descriptor information from connected devices
 using the win32api module.

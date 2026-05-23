@@ -1,4 +1,6 @@
 #!/bin/bash
+# SPDX-FileCopyrightText: Copyright 2026 Neradoc, https://neradoc.me
+# SPDX-License-Identifier: MIT
 
 if [[ -z `command -v python3` ]]; then
 	alias python3=python

@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: Copyright 2026 Neradoc, https://neradoc.me
+# SPDX-License-Identifier: MIT
 
 """
 Use pyudev and traverse the USB hierarchy of USB devices, removing the parent ones that can be identified as hubs.

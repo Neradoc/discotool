@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Copyright 2026 Neradoc, https://neradoc.me
+# SPDX-License-Identifier: MIT
+
 from .usbinfos import (
 	get_devices_list,
 	get_identified_devices,

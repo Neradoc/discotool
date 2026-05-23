@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Copyright 2026 Neradoc, https://neradoc.me
+# SPDX-License-Identifier: MIT
+
 click>=7.1.2
 click-aliases==1.0.1
 psutil>=5.8.0
