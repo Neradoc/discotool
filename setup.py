@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Copyright 2026 Neradoc, https://neradoc.me
+# SPDX-License-Identifier: MIT
+
 import os
 import re
 import setuptools

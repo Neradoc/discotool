@@ -12,5 +12,8 @@ if [[ "$gitversion" == *"dirty"* ]]; then
 	exit 1
 fi
 
-python3 setup.py sdist
-python3 -m twine upload --username __token__ dist/*
+
+python3 tools/build_help.py update
+# python3 setup.py sdist
+python3 -m build
+python3 -m twine upload --username __token__ -- dist/*
